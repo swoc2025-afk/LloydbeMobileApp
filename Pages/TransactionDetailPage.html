@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Transaction Detail</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen tx-detail-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="TransactionsPage.html">◀ Back</a>
+        <div class="page-title">Transaction</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section tx-detail-hero" id="txHeroCard">
+        <div class="tx-detail-icon" id="txIcon" aria-hidden="true">💳</div>
+        <h2 id="txName">Transaction</h2>
+        <p id="txAmount">£0.00</p>
+      </section>
+
+      <section class="section tx-detail-list" id="txDetailList">
+        <div class="tx-detail-row">
+          <span>Date</span>
+          <strong id="txDate">-</strong>
+        </div>
+        <div class="tx-detail-row">
+          <span>Time</span>
+          <strong id="txTime">-</strong>
+        </div>
+        <div class="tx-detail-row">
+          <span>Location</span>
+          <strong id="txLocation">-</strong>
+        </div>
+        <div class="tx-detail-row">
+          <span>Type</span>
+          <strong id="txType">-</strong>
+        </div>
+      </section>
+
+      <section class="section tx-detail-form" style="padding-bottom: 24px;">
+        <label class="field-title" for="txNote">Add note</label>
+        <textarea id="txNote" class="input tx-note-input" rows="3" placeholder="Add a note..."></textarea>
+
+        <label class="field-title" for="txReceipt" style="margin-top: 10px;">Add receipt</label>
+        <label class="tx-receipt-picker" for="txReceipt">
+          <span>Choose image / file</span>
+          <strong id="txReceiptName">No receipt added</strong>
+        </label>
+        <input id="txReceipt" type="file" accept="image/*,.pdf" hidden />
+
+        <button id="txSaveBtn" class="btn primary tx-save-btn" type="button">Save</button>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbeTxDetails';
+        var TRANSACTIONS_KEY = 'lloydbeTransactionsV1';
+        var transactions = {
+          wings_dat: {
+            name: 'Wings & Dat',
+            amount: 8.5,
+            icon: '🍗',
+            date: '24 Feb 2026',
+            time: '13:42',
+            location: 'Oxford Road, Manchester',
+            type: 'Card payment',
+            color: '#ffe9cc'
+          },
+          lidl: {
+            name: 'Lidl',
+            amount: 9.42,
+            icon: '🧺',
+            date: '23 Feb 2026',
+            time: '18:11',
+            location: 'Upper Brook St, Manchester',
+            type: 'Groceries',
+            color: '#e8f4ff'
+          },
+          costa: {
+            name: 'Costa',
+            amount: 4.9,
+            icon: '☕',
+            date: '23 Feb 2026',
+            time: '09:17',
+            location: 'Piccadilly Station, Manchester',
+            type: 'Food & drink',
+            color: '#f4eaff'
+          },
+          uber: {
+            name: 'Uber',
+            amount: 12.2,
+            icon: '🚕',
+            date: '22 Feb 2026',
+            time: '22:04',
+            location: 'Manchester City Centre',
+            type: 'Transport',
+            color: '#efe9ff'
+          },
+          odeon: {
+            name: 'Odeon',
+            amount: 11.99,
+            icon: '🎬',
+            date: '22 Feb 2026',
+            time: '19:36',
+            location: 'Great Northern, Manchester',
+            type: 'Entertainment',
+            color: '#e6f8ff'
+          },
+          primark: {
+            name: 'Primark',
+            amount: 23.6,
+            icon: '🛍️',
+            date: '21 Feb 2026',
+            time: '15:08',
+            location: 'Market Street, Manchester',
+            type: 'Shopping',
+            color: '#ffe8f3'
+          },
+          dominos: {
+            name: "Domino's",
+            amount: 14.75,
+            icon: '🍕',
+            date: '21 Feb 2026',
+            time: '20:51',
+            location: 'Fallowfield, Manchester',
+            type: 'Food & drink',
+            color: '#fff0db'
+          },
+          sainsburys: {
+            name: "Sainsbury's",
+            amount: 44.77,
+            icon: "🛒",
+            date: "20 Feb 2026",
+            time: "16:20",
+            location: "Fallowfield, Manchester",
+            type: "Groceries",
+            color: "#e8f4ff"
+          },
+          starbucks: {
+            name: "Starbucks",
+            amount: 5.35,
+            icon: "🥤",
+            date: "20 Feb 2026",
+            time: "09:06",
+            location: "Oxford Road, Manchester",
+            type: "Food & drink",
+            color: "#f4eaff"
+          },
+          trainline: {
+            name: "Trainline",
+            amount: 18.4,
+            icon: "🚆",
+            date: "20 Feb 2026",
+            time: "07:42",
+            location: "Manchester Piccadilly",
+            type: "Transport",
+            color: "#efe9ff"
+          }
+        };
+
+        var params = new URLSearchParams(window.location.search);
+        var txId = params.get('tx') || 'wings_dat';
+
+        function loadDynamicTransaction(id) {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || '[]');
+            if (!Array.isArray(parsed)) {
+              return null;
+            }
+            return parsed.find(function (item) {
+              return String(item.id || '') === String(id || '');
+            }) || null;
+          } catch (error) {
+            return null;
+          }
+        }
+
+        function formatDateLabel(value) {
+          var d = new Date(value);
+          if (Number.isNaN(d.getTime())) {
+            return '-';
+          }
+          return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function formatTimeLabel(value) {
+          var d = new Date(value);
+          if (Number.isNaN(d.getTime())) {
+            return '-';
+          }
+          return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        var dynamicTx = loadDynamicTransaction(txId);
+        var tx = dynamicTx ? {
+          name: dynamicTx.name || 'Transfer',
+          amount: Number(dynamicTx.amount) || 0,
+          icon: dynamicTx.icon || '💸',
+          date: formatDateLabel(dynamicTx.createdAt),
+          time: formatTimeLabel(dynamicTx.createdAt),
+          location: dynamicTx.location || 'Lloydbe transfer',
+          type: dynamicTx.type || (dynamicTx.direction === 'in' ? 'Received money' : 'Sent money'),
+          color: dynamicTx.color || '#efe9ff',
+          direction: dynamicTx.direction || 'out',
+          note: dynamicTx.note || ''
+        } : (transactions[txId] || {
+          name: 'Transaction',
+          amount: 0,
+          icon: '💳',
+          date: '-',
+          time: '-',
+          location: '-',
+          type: 'Payment',
+          color: '#f2ede5'
+        });
+
+        var hero = document.getElementById('txHeroCard');
+        var icon = document.getElementById('txIcon');
+        var name = document.getElementById('txName');
+        var amount = document.getElementById('txAmount');
+        var date = document.getElementById('txDate');
+        var time = document.getElementById('txTime');
+        var location = document.getElementById('txLocation');
+        var type = document.getElementById('txType');
+        var noteInput = document.getElementById('txNote');
+        var receiptInput = document.getElementById('txReceipt');
+        var receiptName = document.getElementById('txReceiptName');
+        var saveBtn = document.getElementById('txSaveBtn');
+
+        function formatMoney(value) {
+          var amount = Number(value);
+          if (!Number.isFinite(amount)) {
+            amount = 0;
+          }
+          return '£' + amount.toFixed(2);
+        }
+
+        function loadSaved() {
+          try {
+            var allSaved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            return allSaved[txId] || {};
+          } catch (error) {
+            return {};
+          }
+        }
+
+        function saveData(partial) {
+          try {
+            var allSaved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSaved[txId] = Object.assign({}, allSaved[txId] || {}, partial);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSaved));
+          } catch (error) {
+            return;
+          }
+        }
+
+        hero.style.background = tx.color;
+        icon.textContent = tx.icon;
+        name.textContent = tx.name;
+        if (dynamicTx) {
+          amount.textContent = (tx.direction === 'in' ? '+' : '-') + formatMoney(Math.abs(tx.amount));
+          amount.style.color = tx.direction === 'in' ? '#24a46d' : '#d45b5b';
+        } else {
+          amount.textContent = formatMoney(tx.amount);
+        }
+        date.textContent = tx.date;
+        time.textContent = tx.time;
+        location.textContent = tx.location;
+        type.textContent = tx.type;
+
+        var saved = loadSaved();
+        noteInput.value = saved.note || tx.note || '';
+        receiptName.textContent = saved.receiptName || 'No receipt added';
+
+        receiptInput.addEventListener('change', function () {
+          var fileName = receiptInput.files && receiptInput.files[0] ? receiptInput.files[0].name : 'No receipt added';
+          receiptName.textContent = fileName;
+          if (fileName !== 'No receipt added') {
+            saveData({ receiptName: fileName });
+          }
+        });
+
+        saveBtn.addEventListener('click', function () {
+          saveData({ note: noteInput.value.trim() });
+          saveBtn.textContent = 'Saved';
+          window.setTimeout(function () {
+            saveBtn.textContent = 'Save';
+          }, 1000);
+        });
+      })();
+    </script>
+  </body>
+</html>

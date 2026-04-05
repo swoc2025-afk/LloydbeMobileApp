@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Friend Requests</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen social-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="SocialPage.html">◀ Back</a>
+        <div class="page-title">Friend Requests</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <div id="requestsList"></div>
+        <div id="requestsEmpty" class="tx-no-results" hidden>No pending friend requests.</div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var FRIENDS_KEY = 'lloydbeFriends';
+        var REQUESTS_KEY = 'lloydbeFriendRequestsV1';
+        var CURRENT_USER_KEY = 'lloydbeCurrentUserV1';
+        var NAME_KEY_PREFIX = 'lloydbeSignupNameV1::user::';
+        var EMAIL_KEY_PREFIX = 'lloydbeSignupEmailV1::user::';
+        var PHONE_KEY_PREFIX = 'lloydbeVerifiedPhoneV1::user::';
+        var TAG_KEY = 'lloydbeLloydsTagV1';
+
+        var listEl = document.getElementById('requestsList');
+        var emptyEl = document.getElementById('requestsEmpty');
+
+        function scopedKeyForUser(baseKey, owner) {
+          if (window.LloydbeUserScope && typeof window.LloydbeUserScope.toScopedKey === 'function') {
+            return window.LloydbeUserScope.toScopedKey(baseKey, owner);
+          }
+          return baseKey + '::user::' + String(owner || '').trim().toLowerCase();
+        }
+
+        function getCurrentUser() {
+          return String(localStorage.getItem(CURRENT_USER_KEY) || '').trim().toLowerCase();
+        }
+
+        function loadRequests(owner) {
+          try {
+            var raw = localStorage.getItem(scopedKeyForUser(REQUESTS_KEY, owner));
+            var parsed = JSON.parse(raw || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveRequests(owner, items) {
+          localStorage.setItem(scopedKeyForUser(REQUESTS_KEY, owner), JSON.stringify(items));
+        }
+
+        function loadFriends(owner) {
+          try {
+            var raw = localStorage.getItem(scopedKeyForUser(FRIENDS_KEY, owner));
+            var parsed = JSON.parse(raw || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveFriends(owner, items) {
+          localStorage.setItem(scopedKeyForUser(FRIENDS_KEY, owner), JSON.stringify(items));
+        }
+
+        function readName(owner) {
+          try {
+            var raw = localStorage.getItem(NAME_KEY_PREFIX + owner);
+            var parsed = raw ? JSON.parse(raw) : null;
+            if (!parsed || typeof parsed !== 'object') {
+              return '';
+            }
+            var first = String(parsed.firstName || '').trim();
+            var last = String(parsed.lastName || '').trim();
+            return (first + ' ' + last).trim();
+          } catch (error) {
+            return '';
+          }
+        }
+
+        function readByOwner(prefix, owner) {
+          return String(localStorage.getItem(prefix + owner) || '').trim();
+        }
+
+        function readTag(owner) {
+          var tag = String(localStorage.getItem(scopedKeyForUser(TAG_KEY, owner)) || '').trim().replace(/^@+/, '');
+          return tag ? '@' + tag : '';
+        }
+
+        function addFriendForUser(owner, friend) {
+          var friends = loadFriends(owner);
+          var exists = friends.some(function (item) {
+            return String(item.handle || '').toLowerCase() === String(friend.handle || '').toLowerCase();
+          });
+          if (exists) {
+            return;
+          }
+          friends.unshift(friend);
+          saveFriends(owner, friends);
+        }
+
+        function declineRequest(requestId) {
+          var owner = getCurrentUser();
+          var remaining = loadRequests(owner).filter(function (req) {
+            return String(req.id || '') !== String(requestId || '');
+          });
+          saveRequests(owner, remaining);
+          render();
+        }
+
+        function acceptRequest(request) {
+          var currentOwner = getCurrentUser();
+          var fromOwner = String(request.fromOwner || '').trim().toLowerCase();
+          if (!currentOwner || !fromOwner) {
+            return;
+          }
+
+          var currentName = readName(currentOwner) || 'Lloydbe user';
+          var currentHandle = readTag(currentOwner);
+          var currentEmail = readByOwner(EMAIL_KEY_PREFIX, currentOwner).toLowerCase();
+          var currentPhone = readByOwner(PHONE_KEY_PREFIX, currentOwner);
+
+          var fromName = String(request.fromName || '').trim() || 'Lloydbe user';
+          var fromHandle = String(request.fromHandle || '').trim();
+
+          addFriendForUser(currentOwner, {
+            id: 'friend_' + fromOwner,
+            name: fromName,
+            handle: fromHandle || '@friend',
+            status: 'settled',
+            amount: 0,
+            color: '#d8cdfa'
+          });
+
+          addFriendForUser(fromOwner, {
+            id: 'friend_' + currentOwner,
+            name: currentName,
+            handle: currentHandle || '@friend',
+            status: 'settled',
+            amount: 0,
+            color: '#d8cdfa'
+          });
+
+          var remaining = loadRequests(currentOwner).filter(function (req) {
+            return String(req.id || '') !== String(request.id || '');
+          });
+          saveRequests(currentOwner, remaining);
+          render();
+        }
+
+        function requestSubtitle(request) {
+          var parts = [];
+          var handle = String(request.fromHandle || '').trim();
+          var email = String(request.fromEmail || '').trim().toLowerCase();
+          var phone = String(request.fromPhone || '').trim();
+          if (handle) {
+            parts.push(handle);
+          }
+          if (email) {
+            parts.push(email);
+          }
+          if (phone) {
+            parts.push(phone);
+          }
+          return parts.join(' · ') || 'Lloydbe user';
+        }
+
+        function render() {
+          var owner = getCurrentUser();
+          var requests = loadRequests(owner).filter(function (request) {
+            return request && request.status === 'pending';
+          });
+
+          listEl.innerHTML = '';
+          emptyEl.hidden = requests.length > 0;
+
+          requests.forEach(function (request) {
+            var row = document.createElement('div');
+            row.className = 'list-item';
+
+            var details = document.createElement('div');
+            details.className = 'details';
+            var nameEl = document.createElement('strong');
+            nameEl.textContent = String(request.fromName || 'Lloydbe user');
+            var subEl = document.createElement('small');
+            subEl.textContent = ' ' + requestSubtitle(request);
+            details.appendChild(nameEl);
+            details.appendChild(subEl);
+
+            var actions = document.createElement('div');
+            actions.style.display = 'flex';
+            actions.style.gap = '8px';
+
+            var acceptBtn = document.createElement('button');
+            acceptBtn.className = 'btn request-send-btn';
+            acceptBtn.type = 'button';
+            acceptBtn.textContent = 'Accept';
+            acceptBtn.addEventListener('click', function () {
+              acceptRequest(request);
+            });
+
+            var declineBtn = document.createElement('button');
+            declineBtn.className = 'btn';
+            declineBtn.type = 'button';
+            declineBtn.textContent = 'Decline';
+            declineBtn.addEventListener('click', function () {
+              declineRequest(request.id);
+            });
+
+            actions.appendChild(acceptBtn);
+            actions.appendChild(declineBtn);
+            row.appendChild(details);
+            row.appendChild(actions);
+            listEl.appendChild(row);
+          });
+        }
+
+        render();
+      })();
+    </script>
+  </body>
+</html>

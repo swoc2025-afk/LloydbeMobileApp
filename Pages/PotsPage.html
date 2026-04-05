@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>All Pots</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen pots-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="HomePage.html">◀ Back</a>
+        <div class="page-title">All Pots</div>
+        <a class="back-link" href="CreatePotPage.html" style="font-size: 13px;">+ New</a>
+      </div>
+
+      <section class="section">
+        <div class="section-title">
+          <span>Your Pots</span>
+          <small id="allPotsCount" style="color: var(--muted); font-weight: 600;">0</small>
+        </div>
+        <div id="allPotsGrid" class="pots-grid">
+        </div>
+      </section>
+    </div>
+
+    <nav class="bottom-nav">
+      <a class="nav-item active" href="HomePage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <path d="M3 10.5l9-7 9 7" />
+          <path d="M5 9.5V20h14V9.5" />
+        </svg>
+        <span>HOME</span>
+      </a>
+      <a class="nav-item" href="TrendsPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4v8h8" />
+          <path d="M12 12l5.5 5.5" />
+        </svg>
+        <span>BUDGET</span>
+      </a>
+      <a class="nav-item social-tab" href="SocialPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="8" r="2.8" />
+          <circle cx="15.8" cy="8.4" r="2.4" />
+          <path d="M3.8 18.7c0-2.6 2.1-4.7 4.7-4.7h5.2c2.6 0 4.7 2.1 4.7 4.7 0 .8-.6 1.5-1.4 1.5H5.2c-.8 0-1.4-.7-1.4-1.5z" />
+        </svg>
+        <span>SOCIAL</span>
+      </a>
+      <a class="nav-item challenges-tab" href="ChallengesPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 5h8v3.6a4 4 0 0 1-8 0V5z" />
+          <path d="M8 7H6.5a2.5 2.5 0 0 0 0 5H8" />
+          <path d="M16 7h1.5a2.5 2.5 0 0 1 0 5H16" />
+          <path d="M12 12.6V16" />
+          <path d="M9.4 19h5.2" />
+        </svg>
+        <span>CHALLENGES</span>
+      </a>
+    </nav>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbePots';
+        var DEFAULT_OVERRIDE_KEY = 'lloydbeDefaultPotOverrides';
+        var ACCOUNT_BALANCE_KEY = 'lloydbeAccountBalanceV1';
+        var TRANSACTIONS_KEY = 'lloydbeTransactionsV1';
+        var INITIAL_ACCOUNT_BALANCE = 1000;
+        var grid = document.getElementById('allPotsGrid');
+        var count = document.getElementById('allPotsCount');
+
+        if (!grid || !count) {
+          return;
+        }
+
+        var colorMap = {
+          Forest: 'var(--green-forest)',
+          Pine: 'var(--green-pine)',
+          Sage: 'var(--green-sage)',
+          Jade: 'var(--green-jade)',
+          Meadow: 'var(--green-meadow)',
+          Evergreen: 'var(--green-evergreen)',
+          Peach: 'var(--peach)',
+          Lavender: 'var(--lav)',
+          Mint: 'var(--mint)',
+          Sky: 'var(--blue)',
+          Sun: 'var(--sun)',
+          Lilac: 'var(--lilac)'
+        };
+
+        function formatMoney(value) {
+          var amount = Number(value);
+          if (!Number.isFinite(amount)) {
+            amount = 0;
+          }
+          return '£' + amount.toFixed(2);
+        }
+
+        function roundMoney(value) {
+          return Math.round(Number(value) * 100) / 100;
+        }
+
+        function getPotProgressPercent(saved, goal) {
+          var safeSaved = Math.max(0, Number(saved) || 0);
+          var safeGoal = Math.max(0, Number(goal) || 0);
+          if (safeGoal <= 0) {
+            return 0;
+          }
+          return Math.min(100, Math.round((safeSaved / safeGoal) * 100));
+        }
+
+        function setCardProgress(card, potData) {
+          if (!card) {
+            return;
+          }
+          var wrap = card.querySelector('.pot-card-progress');
+          if (!wrap) {
+            wrap = document.createElement('div');
+            wrap.className = 'pot-card-progress';
+
+            var track = document.createElement('div');
+            track.className = 'track';
+            var fill = document.createElement('span');
+            fill.className = 'fill';
+            track.appendChild(fill);
+
+            var percent = document.createElement('span');
+            percent.className = 'percent';
+
+            wrap.appendChild(track);
+            wrap.appendChild(percent);
+            card.appendChild(wrap);
+          }
+
+          var pct = getPotProgressPercent(
+            Number(potData && potData.currentAmount) || 0,
+            Number(potData && potData.goal) || 0
+          );
+
+          var fillEl = wrap.querySelector('.fill');
+          var pctEl = wrap.querySelector('.percent');
+          if (fillEl) {
+            fillEl.style.width = pct + '%';
+          }
+          if (pctEl) {
+            pctEl.textContent = pct + '%';
+          }
+        }
+
+        function loadPots() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function loadDefaultOverrides() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(DEFAULT_OVERRIDE_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+          } catch (error) {
+            return {};
+          }
+        }
+
+        function loadTransactions() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveTransactions(items) {
+          localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(items));
+        }
+
+        function getAutosaveIntervalMs(frequency) {
+          var value = String(frequency || '').toLowerCase();
+          if (value === 'daily') {
+            return 24 * 60 * 60 * 1000;
+          }
+          if (value === 'weekly') {
+            return 7 * 24 * 60 * 60 * 1000;
+          }
+          if (value === 'monthly') {
+            return 30 * 24 * 60 * 60 * 1000;
+          }
+          return 0;
+        }
+
+        function processPotAutosaves() {
+          var pots = loadPots();
+          if (!pots.length) {
+            return;
+          }
+
+          var balance = Number(localStorage.getItem(ACCOUNT_BALANCE_KEY));
+          if (!Number.isFinite(balance)) {
+            balance = INITIAL_ACCOUNT_BALANCE;
+          }
+
+          var now = Date.now();
+          var potsChanged = false;
+          var balanceChanged = false;
+          var txChanged = false;
+          var txList = loadTransactions();
+          var txSeq = 0;
+
+          pots.forEach(function (pot) {
+            if (!pot || !pot.autosaveOn) {
+              return;
+            }
+            var amount = Number(pot.autosaveAmount);
+            var interval = getAutosaveIntervalMs(pot.autosaveFrequency);
+            if (!Number.isFinite(amount) || amount <= 0 || !interval) {
+              return;
+            }
+
+            var lastRun = Number(pot.autosaveLastRunAt);
+            if (!Number.isFinite(lastRun) || lastRun <= 0) {
+              pot.autosaveLastRunAt = now;
+              potsChanged = true;
+              return;
+            }
+
+            if (now - lastRun < interval) {
+              return;
+            }
+
+            if (balance >= amount) {
+              balance = roundMoney(balance - amount);
+              pot.currentAmount = roundMoney((Number(pot.currentAmount) || 0) + amount);
+              balanceChanged = true;
+              txList.unshift({
+                id: 'auto_' + now + '_' + (txSeq++),
+                direction: 'out',
+                name: 'Auto-save to ' + (pot.name || 'Pot'),
+                amount: roundMoney(amount),
+                note: 'Automatic transfer to pot',
+                icon: '🏦',
+                type: 'Auto-save',
+                category: 'savings',
+                location: 'Lloydbe Pots',
+                createdAt: new Date(now).toISOString()
+              });
+              txChanged = true;
+            }
+
+            pot.autosaveLastRunAt = now;
+            potsChanged = true;
+          });
+
+          if (potsChanged) {
+            savePots(pots);
+          }
+          if (balanceChanged) {
+            localStorage.setItem(ACCOUNT_BALANCE_KEY, String(balance));
+          }
+          if (txChanged) {
+            saveTransactions(txList);
+          }
+        }
+
+        function renderCustomPot(pot) {
+          var card = document.createElement('a');
+          card.className = 'small-card pot-link';
+          card.href = 'PotDetailPage.html?id=' + encodeURIComponent(String(pot.id || ''));
+          card.style.background = colorMap[pot.color] || 'var(--card)';
+
+          var emoji = document.createElement('div');
+          emoji.className = 'pot-emoji';
+          emoji.setAttribute('aria-hidden', 'true');
+          emoji.textContent = pot.icon || '💰';
+
+          var name = document.createElement('strong');
+          name.textContent = pot.name || 'New Pot';
+
+          var goal = document.createElement('span');
+          goal.className = 'label';
+          goal.textContent = formatMoney(pot.goal);
+
+          card.appendChild(emoji);
+          card.appendChild(name);
+          card.appendChild(goal);
+          setCardProgress(card, pot);
+          grid.appendChild(card);
+        }
+
+        processPotAutosaves();
+        var pots = loadPots();
+
+        pots.forEach(renderCustomPot);
+        count.textContent = String(pots.length);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create Account - Verify Code</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen auth-screen login-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a id="verifyCodeBackLink" class="back-link" href="CreateAccountPhonePage.html">◀ Back</a>
+        <div class="page-title">Verify Code</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <main class="auth-main auth-main-login">
+        <div class="logo-wrap logo-wrap-login" aria-label="Lloydbe logo">
+          <img class="logo-image" src="../logo.png" alt="Lloydbe" />
+        </div>
+
+        <form id="verifyCodeForm" class="login-form" novalidate>
+          <p id="codeDestination" class="auth-helper">Enter the 6-digit code sent to your phone.</p>
+          <div class="code-input-row" aria-label="6 digit code input">
+            <input id="signupCode" class="auth-input auth-code-input" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" />
+          </div>
+          <div id="signupCodeStatus" class="login-status" role="status" aria-live="polite"></div>
+          <button class="auth-btn" type="submit">Verify code</button>
+          <button id="resendCodeBtn" class="auth-link-btn" type="button">Resend code</button>
+        </form>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var SIGNUP_KEY = 'lloydbeSignupVerificationV1';
+        var VERIFIED_PHONE_KEY = 'lloydbeVerifiedPhoneV1';
+        var SMS_API_KEY = 'lloydbeSmsApiUrl';
+        var DEFAULT_SMS_API = 'http://localhost:3001/api/send-login-code';
+
+        var form = document.getElementById('verifyCodeForm');
+        var codeInput = document.getElementById('signupCode');
+        var statusEl = document.getElementById('signupCodeStatus');
+        var destinationEl = document.getElementById('codeDestination');
+        var resendBtn = document.getElementById('resendCodeBtn');
+        var codeRow = document.querySelector('.code-input-row');
+        var backLink = document.getElementById('verifyCodeBackLink');
+
+        if (backLink) {
+          backLink.addEventListener('click', function (event) {
+            event.preventDefault();
+            window.location.href = 'CreateAccountPhonePage.html';
+          });
+        }
+
+        if (codeRow && codeInput) {
+          codeRow.addEventListener('click', function () {
+            codeInput.focus();
+          });
+        }
+
+        codeInput.disabled = false;
+        codeInput.readOnly = false;
+
+        function setStatus(message, isError) {
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('error', !!isError);
+        }
+
+        function getSmsApiUrl() {
+          return localStorage.getItem(SMS_API_KEY) || DEFAULT_SMS_API;
+        }
+
+        function readVerification() {
+          try {
+            var raw = localStorage.getItem(SIGNUP_KEY);
+            if (!raw) {
+              return null;
+            }
+            return JSON.parse(raw);
+          } catch (error) {
+            return null;
+          }
+        }
+
+        function writeVerification(value) {
+          localStorage.setItem(SIGNUP_KEY, JSON.stringify(value));
+        }
+
+        function normalizeCode(value) {
+          return String(value || '').replace(/\D/g, '').slice(0, 6);
+        }
+
+        function maskPhone(phone) {
+          var raw = String(phone || '');
+          var digits = raw.replace(/\D/g, '');
+          if (digits.length < 4) {
+            return raw;
+          }
+          return '••••' + digits.slice(-4);
+        }
+
+        async function sendSmsCode(phoneNumber) {
+          var response = await fetch(getSmsApiUrl(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phoneNumber: phoneNumber })
+          });
+
+          var payload = null;
+          try {
+            payload = await response.json();
+          } catch (parseErr) {
+            payload = null;
+          }
+
+          if (!response.ok || !payload || payload.ok !== true) {
+            var errorMessage = (payload && payload.error) || 'Unable to send SMS code right now.';
+            throw new Error(errorMessage);
+          }
+        }
+
+        var verification = readVerification();
+        if (!verification || !verification.phone) {
+          setStatus('No code request found. Start again from Create Account.', true);
+          form.querySelector('.auth-btn').disabled = true;
+          resendBtn.disabled = true;
+        } else {
+          destinationEl.textContent = 'Enter the 6-digit code sent to ' + maskPhone(verification.phone) + '.';
+        }
+
+        codeInput.addEventListener('input', function () {
+          codeInput.value = normalizeCode(codeInput.value);
+        });
+
+        resendBtn.addEventListener('click', async function () {
+          var current = readVerification();
+          if (!current || !current.phone) {
+            setStatus('Please go back and enter your phone number again.', true);
+            return;
+          }
+
+          resendBtn.disabled = true;
+          try {
+            await sendSmsCode(current.phone);
+            current.code = '200086';
+            current.expiresAt = Date.now() + (5 * 60 * 1000);
+            writeVerification(current);
+            setStatus('A new code has been sent.', false);
+          } catch (error) {
+            setStatus(error.message || 'Unable to resend code.', true);
+          } finally {
+            resendBtn.disabled = false;
+          }
+        });
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var current = readVerification();
+          if (!current || !current.phone || !current.code) {
+            setStatus('No code request found. Start again from Create Account.', true);
+            return;
+          }
+          var enteredCode = normalizeCode(codeInput.value);
+          if (enteredCode.length !== 6) {
+            setStatus('Enter the full 6-digit code.', true);
+            return;
+          }
+
+          if (enteredCode !== '000000' && Date.now() > Number(current.expiresAt || 0)) {
+            setStatus('That code has expired. Tap resend code.', true);
+            return;
+          }
+
+          if (enteredCode !== String(current.code) && enteredCode !== '000000') {
+            setStatus('Incorrect code. Try again.', true);
+            return;
+          }
+
+          localStorage.setItem(VERIFIED_PHONE_KEY, current.phone);
+          localStorage.removeItem(SIGNUP_KEY);
+          setStatus('Phone verified. Continue signup...', false);
+          window.setTimeout(function () {
+            window.location.href = 'CreateAccountEmailPage.html';
+          }, 280);
+        });
+      })();
+    </script>
+  </body>
+</html>

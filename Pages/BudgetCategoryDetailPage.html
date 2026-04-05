@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Budget Category</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen budget-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="TrendsPage.html">◀ Back</a>
+        <div class="page-title" id="budgetCategoryTitle">Category</div>
+        <button id="categoryEditBtn" class="budget-edit-btn" type="button" aria-label="Edit category"
+          onclick="(function(){var b=document.getElementById('categoryDeleteStandaloneBtn');if(!b){return;}var show=b.hidden||b.style.display==='none'||b.style.display==='';b.hidden=!show;b.style.display=show?'block':'none';var e=document.getElementById('categoryEditBtn');if(e){e.textContent=show?'Done':'Edit';}})();">Edit</button>
+      </div>
+
+      <section class="section budget-section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <div id="categoryEditCard" class="budget-card" hidden>
+          <div class="budget-heading-row" style="margin-bottom: 6px;">
+            <h2 style="font-size: 15px;">Edit category</h2>
+          </div>
+          <form id="categoryEditForm" class="create-pot-form">
+            <label class="field-block" for="categoryEditName">
+              <span class="field-title">Name</span>
+              <input id="categoryEditName" class="input" type="text" required />
+            </label>
+            <label class="field-block" for="categoryEditEmoji">
+              <span class="field-title">Emoji</span>
+              <input id="categoryEditEmoji" class="input" type="text" maxlength="2" required />
+            </label>
+            <label class="field-block" for="categoryEditColor">
+              <span class="field-title">Color</span>
+              <input id="categoryEditColor" class="input" type="color" />
+            </label>
+            <label class="field-block" for="categoryEditLimit">
+              <span class="field-title">Monthly limit (£)</span>
+              <input id="categoryEditLimit" class="input" type="number" min="1" step="1" required />
+            </label>
+            <label class="field-block" for="categoryEditTags">
+              <span class="field-title">Keywords (comma separated)</span>
+              <input id="categoryEditTags" class="input" type="text" />
+            </label>
+            <label class="field-block" for="categoryEditDescription">
+              <span class="field-title">Description</span>
+              <input id="categoryEditDescription" class="input" type="text" />
+            </label>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button id="categoryEditSaveBtn" class="btn primary" type="submit">Save</button>
+              <button id="categoryEditCancelBtn" class="btn" type="button">Cancel</button>
+            </div>
+            <button id="categoryDeleteBtn" class="challenge-delete-btn" type="button" style="margin-top: 10px; width: 100%;" hidden>Delete category</button>
+          </form>
+        </div>
+
+        <div id="categorySummaryCard" class="budget-remaining-box">
+          <div class="budget-remaining-label">This month</div>
+          <div class="budget-summary-grid">
+            <div><small>Spent</small><strong id="categorySpent">£0</strong></div>
+            <div><small>Limit</small><strong id="categoryLimit">£0</strong></div>
+            <div><small>Remaining</small><strong id="categoryRemaining">£0</strong></div>
+          </div>
+          <div id="categoryPercentLabel" class="budget-progress-percent">0% used</div>
+          <div class="progress budget-overview-progress"><span id="categoryProgressFill" style="width: 0%;"></span></div>
+        </div>
+
+        <button id="categoryDeleteStandaloneBtn" class="btn challenge-delete-btn" type="button" hidden style="width: 100%; margin-top: 10px;"
+          onclick="(function(){var o=document.getElementById('deleteCategoryConfirm');if(o){o.hidden=false;}})();">Delete category</button>
+
+        <div id="categoryLimitCard" class="budget-card" hidden>
+          <div class="budget-heading-row" style="margin-bottom: 6px;">
+            <h2 style="font-size: 15px;">Edit limit</h2>
+          </div>
+          <form id="categoryLimitForm" class="create-pot-form">
+            <label class="field-block" for="categoryLimitInput">
+              <span class="field-title">Monthly limit (£)</span>
+              <input id="categoryLimitInput" class="input" type="number" min="1" step="1" required />
+            </label>
+            <button id="categoryLimitSave" class="btn primary" type="submit" style="margin-top: 8px;">Save limit</button>
+          </form>
+        </div>
+
+        <div class="budget-card">
+          <div class="budget-heading-row" style="margin-bottom: 8px;">
+            <h2 style="font-size: 15px;">Insights</h2>
+          </div>
+          <div id="categoryInsightText" class="budget-insight-text">No insight yet.</div>
+          <div id="categoryInsightList" class="budget-insight-list"></div>
+        </div>
+
+        <div class="budget-card">
+          <div class="budget-heading-row" style="margin-bottom: 8px;">
+            <h2 style="font-size: 15px;">Recent transactions</h2>
+          </div>
+          <div id="categoryTxList"></div>
+          <div id="categoryTxEmpty" class="budget-empty-text" hidden>No recent transactions in this category.</div>
+        </div>
+      </section>
+    </div>
+
+    <div id="deleteCategoryConfirm" class="confirm-overlay" hidden>
+      <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="deleteCategoryTitle">
+        <h3 id="deleteCategoryTitle">Delete this category?</h3>
+        <p>This will remove the category and its budget setup. This can’t be undone.</p>
+        <div class="confirm-actions">
+          <button id="cancelDeleteCategoryBtn" class="btn" type="button"
+            onclick="(function(){var o=document.getElementById('deleteCategoryConfirm');if(o){o.hidden=true;}})();">Cancel</button>
+          <button id="confirmDeleteCategoryBtn" class="challenge-delete-btn" type="button"
+            onclick="(function(){function j(k,d){try{var p=JSON.parse(localStorage.getItem(k)||'');return p===null?d:p;}catch(e){return d;}}function s(k,v){localStorage.setItem(k,JSON.stringify(v));}var p=new URLSearchParams(window.location.search);var raw=String(p.get('category')||'fun');var def=raw.toLowerCase();var cats=j('lloydbeBudgetCategoriesV1',[]);if(!Array.isArray(cats)){cats=[];}var idx=-1;for(var i=0;i<cats.length;i++){var id=String((cats[i]&&cats[i].id)||'');if(id.toLowerCase()===def||id===raw){idx=i;break;}}var categoryId=idx!==-1?String((cats[idx]&&cats[idx].id)||raw):def;if(idx!==-1){cats.splice(idx,1);s('lloydbeBudgetCategoriesV1',cats);}else{var deleted=j('lloydbeBudgetDeletedCategoriesV1',[]);if(!Array.isArray(deleted)){deleted=[];}if(deleted.indexOf(categoryId)===-1){deleted.push(categoryId);}s('lloydbeBudgetDeletedCategoriesV1',deleted);}var limits=j('lloydbeBudgetCategoryLimitsV1',{});if(limits&&typeof limits==='object'&&Object.prototype.hasOwnProperty.call(limits,categoryId)){delete limits[categoryId];s('lloydbeBudgetCategoryLimitsV1',limits);}var overrides=j('lloydbeBudgetCategoryOverridesV1',{});if(overrides&&typeof overrides==='object'&&Object.prototype.hasOwnProperty.call(overrides,categoryId)){delete overrides[categoryId];s('lloydbeBudgetCategoryOverridesV1',overrides);}window.location.href='TrendsPage.html';})();">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var LIMITS_KEY = 'lloydbeBudgetCategoryLimitsV1';
+        var TX_KEY = 'lloydbeTransactionsV1';
+        var CATEGORIES_KEY = 'lloydbeBudgetCategoriesV1';
+        var OVERRIDES_KEY = 'lloydbeBudgetCategoryOverridesV1';
+        var DELETED_CATEGORIES_KEY = 'lloydbeBudgetDeletedCategoriesV1';
+
+        var config = {
+          phone: {
+            title: 'Phone Bill',
+            icon: '📱',
+            color: '#b7e3b2',
+            defaultLimit: 10,
+            spent: 0,
+            lastMonthSpent: 5,
+            tags: ['phone', 'bill', 'mobile'],
+            description: 'Phone and mobile plan spend.'
+          },
+          health: {
+            title: 'Health',
+            icon: '💗',
+            color: '#1ec389',
+            defaultLimit: 20,
+            spent: 10.5,
+            lastMonthSpent: 8.75,
+            tags: ['health', 'pharmacy', 'medical'],
+            description: 'Wellbeing, pharmacy and health costs.'
+          },
+          fun: {
+            title: 'Fun',
+            icon: '🎬',
+            color: '#0b6f4d',
+            defaultLimit: 50,
+            spent: 30,
+            lastMonthSpent: 24.5,
+            tags: ['fun', 'entertainment', 'cinema'],
+            description: 'Entertainment and leisure spend.'
+          }
+        };
+
+        var fallbackTransactions = {
+          phone: [
+            { name: 'O2 Mobile', amount: 10, date: '24 Feb 2026' }
+          ],
+          health: [
+            { name: 'Boots', amount: 7.89, date: '24 Feb 2026' },
+            { name: 'Lloyds Pharmacy', amount: 2.61, date: '21 Feb 2026' }
+          ],
+          fun: [
+            { name: 'Odeon', amount: 11.99, date: '22 Feb 2026' },
+            { name: 'Arcade Club', amount: 18.01, date: '20 Feb 2026' }
+          ]
+        };
+
+        function loadCustomCategories() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(CATEGORIES_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function loadOverrides() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(OVERRIDES_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+          } catch (error) {
+            return {};
+          }
+        }
+
+        function saveOverrides(overrides) {
+          localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+        }
+
+        function loadDeletedCategories() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(DELETED_CATEGORIES_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveDeletedCategories(items) {
+          localStorage.setItem(DELETED_CATEGORIES_KEY, JSON.stringify(items));
+        }
+
+        var params = new URLSearchParams(window.location.search);
+        var rawCategoryId = String(params.get('category') || 'fun');
+        var defaultCategoryId = rawCategoryId.toLowerCase();
+        var customCategory = loadCustomCategories().find(function (item) {
+          return String(item.id || '').toLowerCase() === defaultCategoryId.toLowerCase() || String(item.id || '') === rawCategoryId;
+        });
+        var overrides = loadOverrides();
+        var defaultWithOverrides = Object.assign({}, config[defaultCategoryId] || config.fun, overrides[defaultCategoryId] || {});
+        var categoryId = customCategory ? String(customCategory.id || rawCategoryId) : defaultCategoryId;
+        var isCustomCategory = !!customCategory;
+        var deletedCategories = loadDeletedCategories().map(function (item) { return String(item || '').toLowerCase(); });
+        if (!isCustomCategory && deletedCategories.indexOf(String(categoryId || '').toLowerCase()) !== -1) {
+          window.location.href = 'TrendsPage.html';
+          return;
+        }
+        var category = customCategory ? {
+          title: String(customCategory.name || 'Custom category'),
+          icon: String(customCategory.emoji || '🧩'),
+          color: String(customCategory.color || '#d8cdfa'),
+          defaultLimit: Number(customCategory.limit) || 50,
+          spent: Number(customCategory.spent) || 0,
+          lastMonthSpent: Number(customCategory.lastMonthSpent) || 0,
+          tags: Array.isArray(customCategory.tags) && customCategory.tags.length ? customCategory.tags : [String(customCategory.name || '').toLowerCase()],
+          description: String(customCategory.description || '')
+        } : defaultWithOverrides;
+
+        var titleEl = document.getElementById('budgetCategoryTitle');
+        var editBtn = document.getElementById('categoryEditBtn');
+        var editCard = document.getElementById('categoryEditCard');
+        var editForm = document.getElementById('categoryEditForm');
+        var editNameInput = document.getElementById('categoryEditName');
+        var editEmojiInput = document.getElementById('categoryEditEmoji');
+        var editColorInput = document.getElementById('categoryEditColor');
+        var editLimitInput = document.getElementById('categoryEditLimit');
+        var editTagsInput = document.getElementById('categoryEditTags');
+        var editDescriptionInput = document.getElementById('categoryEditDescription');
+        var editSaveBtn = document.getElementById('categoryEditSaveBtn');
+        var editCancelBtn = document.getElementById('categoryEditCancelBtn');
+        var deleteBtn = document.getElementById('categoryDeleteStandaloneBtn');
+        var limitCard = document.getElementById('categoryLimitCard');
+        var spentEl = document.getElementById('categorySpent');
+        var limitEl = document.getElementById('categoryLimit');
+        var remainingEl = document.getElementById('categoryRemaining');
+        var percentEl = document.getElementById('categoryPercentLabel');
+        var fillEl = document.getElementById('categoryProgressFill');
+        var limitInput = document.getElementById('categoryLimitInput');
+        var limitForm = document.getElementById('categoryLimitForm');
+        var limitSaveBtn = document.getElementById('categoryLimitSave');
+        var insightEl = document.getElementById('categoryInsightText');
+        var insightListEl = document.getElementById('categoryInsightList');
+        var txListEl = document.getElementById('categoryTxList');
+        var txEmptyEl = document.getElementById('categoryTxEmpty');
+        var deleteConfirm = document.getElementById('deleteCategoryConfirm');
+        var cancelDeleteBtn = document.getElementById('cancelDeleteCategoryBtn');
+        var confirmDeleteBtn = document.getElementById('confirmDeleteCategoryBtn');
+
+        function money(value) {
+          var n = Number(value);
+          if (!Number.isFinite(n)) {
+            n = 0;
+          }
+          return '£' + n.toFixed(2);
+        }
+
+        function progressColor(percent) {
+          if (percent < 50) {
+            return '#2db56f';
+          }
+          if (percent <= 80) {
+            return '#f0a34a';
+          }
+          return '#dd5b5b';
+        }
+
+        function loadLimits() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(LIMITS_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+          } catch (error) {
+            return {};
+          }
+        }
+
+        function saveLimit(value) {
+          var all = loadLimits();
+          all[categoryId] = Number(value);
+          localStorage.setItem(LIMITS_KEY, JSON.stringify(all));
+        }
+
+        function loadLimit() {
+          var all = loadLimits();
+          var custom = Number(all[categoryId]);
+          return Number.isFinite(custom) && custom > 0 ? custom : category.defaultLimit;
+        }
+
+        function openEditCard() {
+          editCard.hidden = true;
+          editCard.style.display = 'none';
+          if (limitCard) {
+            limitCard.hidden = true;
+            limitCard.style.display = 'none';
+          }
+          if (editBtn) {
+            editBtn.textContent = 'Done';
+          }
+          if (deleteBtn) {
+            deleteBtn.hidden = false;
+            deleteBtn.style.display = 'block';
+          }
+          if (deleteBtn) {
+            deleteBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+
+        function closeEditCard() {
+          editCard.hidden = true;
+          editCard.style.display = 'none';
+          if (limitCard) {
+            limitCard.hidden = true;
+            limitCard.style.display = 'none';
+          }
+          if (editBtn) {
+            editBtn.textContent = 'Edit';
+          }
+        }
+
+        function openDeleteConfirm() {
+          if (!deleteConfirm) {
+            return;
+          }
+          deleteConfirm.hidden = false;
+        }
+
+        function closeDeleteConfirm() {
+          if (!deleteConfirm) {
+            return;
+          }
+          deleteConfirm.hidden = true;
+        }
+
+        function deleteCurrentCategory() {
+          if (isCustomCategory) {
+            var allCustom = loadCustomCategories().filter(function (item) {
+              return String(item.id || '') !== String(categoryId);
+            });
+            localStorage.setItem(CATEGORIES_KEY, JSON.stringify(allCustom));
+          } else {
+            var deleted = loadDeletedCategories();
+            if (deleted.indexOf(categoryId) === -1) {
+              deleted.push(categoryId);
+              saveDeletedCategories(deleted);
+            }
+          }
+
+          var limits = loadLimits();
+          if (Object.prototype.hasOwnProperty.call(limits, categoryId)) {
+            delete limits[categoryId];
+            localStorage.setItem(LIMITS_KEY, JSON.stringify(limits));
+          }
+
+          var overrides = loadOverrides();
+          if (Object.prototype.hasOwnProperty.call(overrides, categoryId)) {
+            delete overrides[categoryId];
+            saveOverrides(overrides);
+          }
+
+          closeDeleteConfirm();
+          window.location.href = 'TrendsPage.html';
+        }
+
+        function saveCategoryInfo(values) {
+          category.title = values.title;
+          category.icon = values.icon;
+          category.color = values.color;
+          category.tags = values.tags;
+          category.description = values.description;
+          category.defaultLimit = values.limit;
+
+          saveLimit(values.limit);
+
+          if (isCustomCategory) {
+            var allCustom = loadCustomCategories();
+            var idx = allCustom.findIndex(function (item) {
+              return String(item.id || '') === String(categoryId);
+            });
+            if (idx !== -1) {
+              allCustom[idx] = Object.assign({}, allCustom[idx], {
+                name: values.title,
+                emoji: values.icon,
+                color: values.color,
+                limit: values.limit,
+                tags: values.tags,
+                description: values.description
+              });
+              localStorage.setItem(CATEGORIES_KEY, JSON.stringify(allCustom));
+            }
+          } else {
+            var current = loadOverrides();
+            current[categoryId] = {
+              title: values.title,
+              icon: values.icon,
+              color: values.color,
+              defaultLimit: values.limit,
+              tags: values.tags,
+              description: values.description
+            };
+            saveOverrides(current);
+          }
+        }
+
+        function loadTransactions() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(TX_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function filterCategoryTransactions() {
+          var tags = category.tags;
+          var items = loadTransactions().filter(function (tx) {
+            var haystack = (String(tx.category || '') + ' ' + String(tx.name || '')).toLowerCase();
+            return tags.some(function (tag) {
+              return haystack.indexOf(tag) !== -1;
+            });
+          });
+
+          if (items.length > 0) {
+            return items.slice(0, 5).map(function (tx) {
+              var d = new Date(tx.createdAt);
+              return {
+                name: tx.name || 'Transaction',
+                amount: Number(tx.amount) || 0,
+                date: Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+              };
+            });
+          }
+          return (fallbackTransactions[categoryId] || []).slice(0, 5);
+        }
+
+        function insightText(current, lastMonth) {
+          var now = Number(current) || 0;
+          var prev = Number(lastMonth) || 0;
+          if (prev <= 0 && now > 0) {
+            return "You've started spending in this category this month.";
+          }
+          if (prev <= 0 && now <= 0) {
+            return 'No spend this month or last month.';
+          }
+          var diff = ((now - prev) / prev) * 100;
+          var pct = Math.round(Math.abs(diff));
+          if (Math.abs(diff) < 1) {
+            return "You're spending about the same as last month.";
+          }
+          if (diff > 0) {
+            return "You've spent " + pct + '% more than last month.';
+          }
+          return "You've spent " + pct + '% less than last month.';
+        }
+
+        function buildSmartInsights(spent, limit, lastMonthSpent) {
+          var items = [];
+          var usedPct = limit > 0 ? (spent / limit) * 100 : 0;
+          var remaining = Math.max(0, limit - spent);
+          var overBy = Math.max(0, spent - limit);
+          var lastMonth = Number(lastMonthSpent) || 0;
+
+          if (lastMonth > 0) {
+            var monthDelta = ((spent - lastMonth) / lastMonth) * 100;
+            var monthPct = Math.round(Math.abs(monthDelta));
+            if (monthDelta < -1) {
+              items.push("You're spending " + monthPct + '% less on ' + category.title.toLowerCase() + ' than last month.');
+            } else if (monthDelta > 1) {
+              items.push("You're spending " + monthPct + '% more on ' + category.title.toLowerCase() + ' than last month.");
+            } else {
+              items.push("Your " + category.title.toLowerCase() + " spending is very similar to last month.");
+            }
+          }
+
+          if (usedPct >= 80 && usedPct <= 100) {
+            items.push("You're close to your " + category.title.toLowerCase() + ' limit with ' + Math.round(remaining) + ' left.');
+          } else if (usedPct > 100) {
+            items.push("You've gone over your " + category.title.toLowerCase() + ' limit by ' + money(overBy) + '.');
+          } else if (usedPct <= 50) {
+            items.push('You still have plenty of room in this category this month.');
+          }
+
+          var dayOfMonth = new Date().getDate();
+          var daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+          var monthProgress = daysInMonth > 0 ? dayOfMonth / daysInMonth : 0.5;
+          var expectedByNow = lastMonth > 0 ? lastMonth * monthProgress : (limit * monthProgress * 0.9);
+          if (expectedByNow > 0) {
+            var versusUsual = ((spent - expectedByNow) / expectedByNow) * 100;
+            var usualPct = Math.round(Math.abs(versusUsual));
+            if (versusUsual < -1) {
+              items.push("Your spending is " + usualPct + '% lower than usual for this time of month.');
+            } else if (versusUsual > 1) {
+              items.push("Your spending is " + usualPct + '% higher than usual for this time of month.');
+            }
+          }
+
+          return items.slice(0, 3);
+        }
+
+        function render() {
+          var limit = loadLimit();
+          var spent = Number(category.spent) || 0;
+          var remaining = Math.max(0, limit - spent);
+          var used = limit > 0 ? Math.min(100, Math.round((spent / limit) * 100)) : 0;
+
+          titleEl.textContent = category.title;
+          spentEl.textContent = money(spent);
+          limitEl.textContent = money(limit);
+          remainingEl.textContent = money(remaining);
+          percentEl.textContent = used + '% used';
+          fillEl.style.width = used + '%';
+          fillEl.style.background = progressColor(used);
+          limitInput.value = String(Math.round(limit));
+          insightEl.textContent = insightText(spent, category.lastMonthSpent);
+          insightListEl.innerHTML = '';
+          buildSmartInsights(spent, limit, category.lastMonthSpent).forEach(function (text) {
+            var row = document.createElement('div');
+            row.className = 'budget-insight-item';
+            row.textContent = text;
+            insightListEl.appendChild(row);
+          });
+
+          var txItems = filterCategoryTransactions();
+          txListEl.innerHTML = '';
+          txEmptyEl.hidden = txItems.length > 0;
+
+          txItems.forEach(function (tx) {
+            var row = document.createElement('div');
+            row.className = 'budget-mini-tx';
+
+            var left = document.createElement('div');
+            var name = document.createElement('strong');
+            name.textContent = tx.name;
+            var date = document.createElement('small');
+            date.textContent = tx.date;
+            left.appendChild(name);
+            left.appendChild(date);
+
+            var amount = document.createElement('strong');
+            amount.textContent = money(tx.amount);
+
+            row.appendChild(left);
+            row.appendChild(amount);
+            txListEl.appendChild(row);
+          });
+        }
+
+        limitForm.addEventListener('submit', function (event) {
+          event.preventDefault();
+          var next = Number(limitInput.value);
+          if (!Number.isFinite(next) || next <= 0) {
+            return;
+          }
+          saveLimit(next);
+          limitSaveBtn.textContent = 'Saved';
+          window.setTimeout(function () {
+            limitSaveBtn.textContent = 'Save limit';
+          }, 900);
+          render();
+        });
+
+        function handleEditToggle(event) {
+          if (event) {
+            event.preventDefault();
+          }
+          if (deleteBtn && (deleteBtn.hidden || deleteBtn.style.display === 'none' || deleteBtn.style.display === '')) {
+            openEditCard();
+          } else {
+            closeEditCard();
+          }
+        }
+
+        if (editBtn) {
+          editBtn.onclick = handleEditToggle;
+        }
+
+        if (editCancelBtn) {
+          editCancelBtn.addEventListener('click', function () {
+            closeEditCard();
+          });
+        }
+
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', function () {
+            openDeleteConfirm();
+          });
+        }
+
+        if (cancelDeleteBtn) {
+          cancelDeleteBtn.addEventListener('click', function () {
+            closeDeleteConfirm();
+          });
+        }
+
+        if (confirmDeleteBtn) {
+          confirmDeleteBtn.addEventListener('click', function () {
+            deleteCurrentCategory();
+          });
+        }
+
+        if (deleteConfirm) {
+          deleteConfirm.addEventListener('click', function (event) {
+            if (event.target === deleteConfirm) {
+              closeDeleteConfirm();
+            }
+          });
+        }
+
+        if (editForm) {
+          editForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var title = (editNameInput.value || '').trim();
+            var icon = (editEmojiInput.value || '').trim();
+            var color = (editColorInput.value || '').trim() || '#d8cdfa';
+            var limit = Number(editLimitInput.value);
+            var tags = (editTagsInput.value || '')
+              .split(',')
+              .map(function (value) { return value.trim().toLowerCase(); })
+              .filter(Boolean);
+            var description = (editDescriptionInput.value || '').trim();
+            if (!title || !icon || !Number.isFinite(limit) || limit <= 0) {
+              return;
+            }
+
+            saveCategoryInfo({
+              title: title,
+              icon: icon,
+              color: color,
+              limit: Math.round(limit),
+              tags: tags.length ? tags : [title.toLowerCase()],
+              description: description
+            });
+
+            editSaveBtn.textContent = 'Saved';
+            window.setTimeout(function () {
+              editSaveBtn.textContent = 'Save';
+            }, 900);
+            closeEditCard();
+            render();
+          });
+        }
+
+        render();
+      })();
+    </script>
+  </body>
+</html>

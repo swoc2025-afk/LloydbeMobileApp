@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Add Recipient</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen request-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="SendMoneyPage.html">◀ Back</a>
+        <div class="page-title">Add New Recipient</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section">
+        <form class="create-pot-form add-recipient-form">
+          <div class="field-block recipient-mode-card">
+            <span class="field-title">Does this person have a Lloydbe nickname?</span>
+            <div class="recipient-mode-buttons">
+              <button id="recipientModeNickname" class="recipient-mode-btn" type="button" data-mode="nickname" aria-pressed="false">Yes</button>
+              <button id="recipientModeBank" class="recipient-mode-btn" type="button" data-mode="bank" aria-pressed="false">No</button>
+            </div>
+            <input id="recipientMode" type="hidden" value="" />
+          </div>
+
+          <div id="nicknameFields" hidden>
+            <label class="field-block" for="recipientNickname">
+              <span class="field-title">Lloydbe nickname</span>
+              <input id="recipientNickname" class="input" type="text" placeholder="@nickname" />
+            </label>
+
+            <label class="field-block" for="recipientNicknameName">
+              <span class="field-title">Full name (optional)</span>
+              <input id="recipientNicknameName" class="input" type="text" placeholder="Enter full name" />
+            </label>
+
+            <label class="field-block" for="recipientReference">
+              <span class="field-title">Reference (optional)</span>
+              <input id="recipientReference" class="input" type="text" placeholder="Rent, Gift, Bills..." />
+            </label>
+          </div>
+
+          <div id="bankFields" hidden>
+            <label class="field-block" for="recipientName">
+              <span class="field-title">Full name</span>
+              <input id="recipientName" class="input" type="text" placeholder="Enter full name" />
+            </label>
+
+            <label class="field-block" for="recipientBank">
+              <span class="field-title">Bank name</span>
+              <input id="recipientBank" class="input" type="text" placeholder="Enter bank name" />
+            </label>
+
+            <label class="field-block" for="recipientSortCode">
+              <span class="field-title">Sort code</span>
+              <input id="recipientSortCode" class="input" type="text" inputmode="numeric" placeholder="12-34-56" maxlength="8" />
+            </label>
+
+            <label class="field-block" for="recipientAccount">
+              <span class="field-title">Account number</span>
+              <input id="recipientAccount" class="input" type="text" inputmode="numeric" placeholder="12345678" maxlength="8" />
+            </label>
+
+            <label class="field-block" for="recipientReferenceBank">
+              <span class="field-title">Reference (optional)</span>
+              <input id="recipientReferenceBank" class="input" type="text" placeholder="Rent, Gift, Bills..." />
+            </label>
+          </div>
+
+          <button id="saveRecipientBtn" class="btn primary" type="submit" style="margin-top: 10px;">Save recipient</button>
+        </form>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbeRecipients';
+        var form = document.querySelector('.add-recipient-form');
+        var button = document.getElementById('saveRecipientBtn');
+        var modeSelect = document.getElementById('recipientMode');
+        var modeButtons = Array.from(document.querySelectorAll('.recipient-mode-btn'));
+        var nicknameFields = document.getElementById('nicknameFields');
+        var bankFields = document.getElementById('bankFields');
+        var nicknameInput = document.getElementById('recipientNickname');
+        var nicknameNameInput = document.getElementById('recipientNicknameName');
+        var referenceInput = document.getElementById('recipientReference');
+        var nameInput = document.getElementById('recipientName');
+        var bankInput = document.getElementById('recipientBank');
+        var sortCodeInput = document.getElementById('recipientSortCode');
+        var accountInput = document.getElementById('recipientAccount');
+        var bankReferenceInput = document.getElementById('recipientReferenceBank');
+
+        function safeDigits(value) {
+          return String(value || '').replace(/\D+/g, '');
+        }
+
+        function normalizeSortCode(value) {
+          var digits = safeDigits(value).slice(0, 6);
+          if (digits.length <= 2) {
+            return digits;
+          }
+          if (digits.length <= 4) {
+            return digits.slice(0, 2) + '-' + digits.slice(2);
+          }
+          return digits.slice(0, 2) + '-' + digits.slice(2, 4) + '-' + digits.slice(4);
+        }
+
+        function saveRecipient(recipient) {
+          var existing = [];
+          try {
+            var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            existing = Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            existing = [];
+          }
+
+          existing.unshift(recipient);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+        }
+
+        function normalizeNickname(value) {
+          var cleaned = String(value || '').trim().replace(/^@+/, '').replace(/\s+/g, '');
+          return cleaned ? '@' + cleaned : '';
+        }
+
+        function setMode(mode) {
+          var isNickname = mode === 'nickname';
+          var isBank = mode === 'bank';
+
+          modeSelect.value = mode;
+
+          modeButtons.forEach(function (btn) {
+            var active = btn.getAttribute('data-mode') === mode;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+          });
+
+          nicknameFields.hidden = !isNickname;
+          bankFields.hidden = !isBank;
+
+          nicknameInput.required = isNickname;
+
+          nameInput.required = isBank;
+          bankInput.required = isBank;
+          sortCodeInput.required = isBank;
+          accountInput.required = isBank;
+        }
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var mode = modeSelect.value;
+          if (mode !== 'nickname' && mode !== 'bank') {
+            return;
+          }
+
+          if (mode === 'nickname') {
+            var nickname = normalizeNickname(nicknameInput.value);
+            var nicknameName = nicknameNameInput.value.trim();
+            var nicknameReference = referenceInput.value.trim();
+
+            if (!nickname) {
+              return;
+            }
+
+            saveRecipient({
+              id: 'custom_' + Date.now(),
+              type: 'nickname',
+              nickname: nickname,
+              name: nicknameName || nickname.replace(/^@/, ''),
+              bank: 'Lloydbe',
+              sortCode: '',
+              accountNumber: '',
+              reference: nicknameReference
+            });
+          } else {
+            var name = nameInput.value.trim();
+            var bank = bankInput.value.trim();
+            var sortCode = normalizeSortCode(sortCodeInput.value);
+            var accountNumber = safeDigits(accountInput.value).slice(0, 8);
+            var reference = bankReferenceInput.value.trim();
+
+            if (!name || !bank || sortCode.length !== 8 || accountNumber.length !== 8) {
+              return;
+            }
+
+            saveRecipient({
+              id: 'custom_' + Date.now(),
+              type: 'bank',
+              name: name,
+              bank: bank,
+              sortCode: sortCode,
+              accountNumber: accountNumber,
+              reference: reference
+            });
+          }
+
+          button.textContent = 'Saved';
+          window.setTimeout(function () {
+            window.location.href = 'SendMoneyPage.html';
+          }, 400);
+        });
+
+        modeSelect.addEventListener('change', function () {
+          setMode(modeSelect.value);
+        });
+        modeButtons.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            setMode(btn.getAttribute('data-mode') || '');
+          });
+        });
+        setMode('');
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Request From Person</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen request-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a id="requestRecipientBack" class="back-link" href="NewRequestPage.html">◀ Back</a>
+        <div class="page-title">Request Money</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section">
+        <div class="send-recipient-hero">
+          <div id="requestRecipientInitials" class="initials" style="background: #d8cdfa;">NA</div>
+          <div class="details">
+            <strong id="requestRecipientName">Recipient</strong>
+            <small id="requestRecipientDetail">Lloydbe</small>
+          </div>
+        </div>
+
+        <form id="requestRecipientForm" class="create-pot-form">
+          <label class="field-block" for="requestAmount">
+            <span class="field-title">Amount (£)</span>
+            <input id="requestAmount" class="input" type="number" min="0.01" step="0.01" placeholder="0.00" required />
+          </label>
+
+          <label class="field-block" for="requestNote">
+            <span class="field-title">Note (optional)</span>
+            <input id="requestNote" class="input" type="text" placeholder="Dinner split, rent..." />
+          </label>
+
+          <button id="confirmRequestBtn" class="btn primary" type="submit" style="margin-top: 10px;">Record as received</button>
+        </form>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var ACCOUNT_BALANCE_KEY = 'lloydbeAccountBalanceV1';
+        var INITIAL_ACCOUNT_BALANCE = 1000;
+        var TRANSACTIONS_KEY = 'lloydbeTransactionsV1';
+        var form = document.getElementById('requestRecipientForm');
+        var amountInput = document.getElementById('requestAmount');
+        var noteInput = document.getElementById('requestNote');
+        var button = document.getElementById('confirmRequestBtn');
+        var backLink = document.getElementById('requestRecipientBack');
+
+        var nameEl = document.getElementById('requestRecipientName');
+        var detailEl = document.getElementById('requestRecipientDetail');
+        var initialsEl = document.getElementById('requestRecipientInitials');
+
+        var params = new URLSearchParams(window.location.search);
+        var source = (params.get('source') || '').trim().toLowerCase();
+        var name = (params.get('name') || '').trim() || 'Friend';
+        var detail = (params.get('detail') || '').trim() || 'Lloydbe';
+        var initials = (params.get('initials') || '').trim() || 'NA';
+        var color = (params.get('color') || '').trim() || '#d8cdfa';
+
+        if (backLink) {
+          backLink.href = source === 'requestsearch' ? 'RequestSearchPage.html' : 'NewRequestPage.html';
+        }
+
+        nameEl.textContent = name;
+        detailEl.textContent = detail;
+        initialsEl.textContent = initials.slice(0, 2).toUpperCase();
+        initialsEl.style.background = color;
+
+        function roundMoney(value) {
+          return Math.round(Number(value) * 100) / 100;
+        }
+
+        function loadBalance() {
+          var raw = Number(localStorage.getItem(ACCOUNT_BALANCE_KEY));
+          if (Number.isFinite(raw)) {
+            return raw;
+          }
+          localStorage.setItem(ACCOUNT_BALANCE_KEY, String(INITIAL_ACCOUNT_BALANCE));
+          return INITIAL_ACCOUNT_BALANCE;
+        }
+
+        function saveIncomingTransaction(personName, amount, note) {
+          var entry = {
+            id: 'p2p_' + Date.now(),
+            kind: 'transfer',
+            direction: 'in',
+            name: personName || 'Incoming transfer',
+            amount: roundMoney(amount),
+            note: note || '',
+            icon: '↘️',
+            category: 'transfer receive',
+            type: 'Received money',
+            location: 'Lloydbe transfer',
+            createdAt: new Date().toISOString(),
+            color: '#e7f8ee'
+          };
+
+          var items = [];
+          try {
+            var parsed = JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || '[]');
+            items = Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            items = [];
+          }
+          items.unshift(entry);
+          localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(items.slice(0, 150)));
+        }
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var amount = Number(amountInput.value);
+          var note = (noteInput.value || '').trim();
+          if (!Number.isFinite(amount) || amount <= 0) {
+            return;
+          }
+
+          var nextBalance = roundMoney(loadBalance() + amount);
+          localStorage.setItem(ACCOUNT_BALANCE_KEY, String(nextBalance));
+          saveIncomingTransaction(name, amount, note);
+
+          button.textContent = 'Recorded';
+          window.setTimeout(function () {
+            window.location.href = source === 'requestsearch' ? 'RequestSearchPage.html' : 'NewRequestPage.html';
+          }, 350);
+        });
+      })();
+    </script>
+  </body>
+</html>

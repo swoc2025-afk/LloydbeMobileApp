@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Search Friends</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen search-only-screen social-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <section class="section search-only-top with-cancel">
+        <label class="search social-search-input search-input-row" for="socialSearchInput">
+          <span aria-hidden="true">🔍</span>
+          <input id="socialSearchInput" type="search" placeholder="Search friends..." autocomplete="off" />
+        </label>
+        <button id="socialSearchCancel" type="button" class="search-cancel-btn">Cancel</button>
+      </section>
+
+      <section class="section search-results-stack">
+        <div id="socialSearchList"></div>
+        <div id="socialSearchNoResults" class="tx-no-results" hidden>No friends match your search.</div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbeFriends';
+        var listEl = document.getElementById('socialSearchList');
+        var searchInput = document.getElementById('socialSearchInput');
+        var cancelBtn = document.getElementById('socialSearchCancel');
+        var noResults = document.getElementById('socialSearchNoResults');
+
+        function goBack() {
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            window.location.href = 'SocialPage.html';
+          }
+        }
+
+        function loadSavedFriends() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function mergedFriends() {
+          var all = loadSavedFriends();
+          var seen = {};
+          return all.filter(function (friend) {
+            var key = String(friend.handle || friend.name || '').toLowerCase();
+            if (!key) {
+              return true;
+            }
+            if (seen[key]) {
+              return false;
+            }
+            seen[key] = true;
+            return true;
+          });
+        }
+
+        function formatAmount(friend) {
+          if (friend.status === 'plus') {
+            return { text: '+£' + Number(friend.amount || 0).toFixed(2), color: '#24a46d' };
+          }
+          if (friend.status === 'minus') {
+            return { text: '-£' + Number(friend.amount || 0).toFixed(2), color: '#d45b5b' };
+          }
+          return { text: 'Settled', color: 'var(--muted)' };
+        }
+
+        function initials(name) {
+          var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+          if (!parts.length) {
+            return 'NA';
+          }
+          if (parts.length === 1) {
+            return parts[0].slice(0, 2).toUpperCase();
+          }
+          return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+
+        function render() {
+          var query = (searchInput.value || '').trim().toLowerCase();
+          var friends = mergedFriends();
+
+          var filtered = friends.filter(function (friend) {
+            if (!query) {
+              return true;
+            }
+            var haystack = (String(friend.name || '') + ' ' + String(friend.handle || '')).toLowerCase();
+            return haystack.indexOf(query) !== -1;
+          });
+
+          listEl.innerHTML = '';
+
+          filtered.forEach(function (friend) {
+            var amount = formatAmount(friend);
+
+            var row = document.createElement('div');
+            row.className = 'list-item';
+
+            var initialsEl = document.createElement('div');
+            initialsEl.className = 'initials';
+            initialsEl.style.background = friend.color || '#d9cdf8';
+            initialsEl.textContent = initials(friend.name);
+
+            var details = document.createElement('div');
+            details.className = 'details';
+
+            var nameEl = document.createElement('strong');
+            nameEl.textContent = friend.name || 'Friend';
+
+            var handleEl = document.createElement('small');
+            handleEl.textContent = ' ' + (friend.handle || '');
+
+            details.appendChild(nameEl);
+            details.appendChild(handleEl);
+
+            var amountEl = document.createElement('div');
+            amountEl.className = 'amount';
+            amountEl.style.color = amount.color;
+            amountEl.textContent = amount.text;
+
+            row.appendChild(initialsEl);
+            row.appendChild(details);
+            row.appendChild(amountEl);
+            listEl.appendChild(row);
+          });
+
+          noResults.hidden = filtered.length > 0 || query === '';
+        }
+
+        cancelBtn.addEventListener('click', goBack);
+        searchInput.addEventListener('input', render);
+
+        render();
+        searchInput.focus();
+      })();
+    </script>
+  </body>
+</html>

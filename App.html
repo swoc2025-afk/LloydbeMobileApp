@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Loading Screen</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen auth-screen loading-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <main class="auth-main">
+        <div class="logo-wrap" aria-label="Lloydbe logo">
+          <img class="logo-image" src="logo.png" alt="Lloydbe" />
+        </div>
+
+        <h1 class="welcome-title">Welcome</h1>
+        <p class="welcome-subtitle">Money, Your Way</p>
+      </main>
+
+      <div class="auth-actions auth-actions-stack">
+        <a class="auth-btn" href="Pages/CreateAccountPhonePage.html">Create Account</a>
+        <a class="auth-btn auth-btn-secondary" href="Pages/LoginPage.html">Log in</a>
+      </div>
+    </div>
+  </body>
+</html>

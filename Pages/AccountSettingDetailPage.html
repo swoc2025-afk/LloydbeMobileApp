@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Setting Details</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen settings-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="AccountSettingsPage.html">◀ Back</a>
+        <div id="settingTitle" class="page-title">Setting</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <div id="settingIntro" class="settings-group-title" style="margin-top: 0; text-transform: none; letter-spacing: 0;">Manage your setting</div>
+
+        <form id="settingForm" class="create-pot-form"></form>
+
+        <p id="settingInfoText" style="display:none; margin: 8px 0 0; color:#5b5b5b; font-weight:600;"></p>
+
+        <button id="saveSettingBtn" class="btn primary" type="button" style="width: 100%; margin-top: 10px;">Save changes</button>
+        <div id="settingStatus" class="login-status" role="status" aria-live="polite" style="margin-top: 8px;"></div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var CRED_KEY = 'lloydbeAuthCredentialV1';
+        var ATTEMPT_KEY = 'lloydbeAuthAttemptsV1';
+        var NAME_KEY = 'lloydbeSignupNameV1';
+        var ADDRESS_KEY = 'lloydbeSignupAddressV1';
+        var SETUP_KEY = 'lloydbeSetupPrefsV1';
+        var TAG_KEY = 'lloydbeLloydsTagV1';
+        var TAG_REGISTRY_KEY = 'lloydbeTagRegistryV1';
+        var CURRENT_USER_KEY = 'lloydbeCurrentUserV1';
+        var PHONE_KEY = 'lloydbeVerifiedPhoneV1';
+        var EMAIL_KEY = 'lloydbeSignupEmailV1';
+        var COUNTRY_KEY = 'lloydbeSignupCountryV1';
+        var DOB_KEY = 'lloydbeSignupDobV1';
+        var SMS_API_KEY = 'lloydbeSmsApiUrl';
+        var API_BASE_KEY = 'lloydbeApiBaseUrl';
+        var DEFAULT_API_BASE = 'http://localhost:3001';
+
+        var params = new URLSearchParams(window.location.search);
+        var key = params.get('setting') || 'personal_details';
+
+        var titleEl = document.getElementById('settingTitle');
+        var introEl = document.getElementById('settingIntro');
+        var formEl = document.getElementById('settingForm');
+        var infoTextEl = document.getElementById('settingInfoText');
+        var saveBtn = document.getElementById('saveSettingBtn');
+        var statusEl = document.getElementById('settingStatus');
+
+        function setStatus(message, isError) {
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('error', !!isError);
+        }
+
+        function setupPasswordToggles() {
+          var passwordInputs = formEl.querySelectorAll('input[type="password"]');
+          passwordInputs.forEach(function (input) {
+            if (input.parentElement && input.parentElement.classList.contains('password-field')) {
+              return;
+            }
+
+            var wrapper = document.createElement('div');
+            wrapper.className = 'password-field';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'password-toggle';
+            button.textContent = 'Show';
+            button.setAttribute('aria-label', 'Show password');
+            button.setAttribute('aria-pressed', 'false');
+
+            button.addEventListener('click', function () {
+              var show = input.type === 'password';
+              input.type = show ? 'text' : 'password';
+              button.textContent = show ? 'Hide' : 'Show';
+              button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+              button.setAttribute('aria-pressed', show ? 'true' : 'false');
+            });
+
+            wrapper.appendChild(button);
+          });
+        }
+
+        function deriveBaseUrlFromSmsApi(url) {
+          var clean = String(url || '').trim();
+          if (!clean) {
+            return '';
+          }
+          var marker = '/api/send-login-code';
+          var idx = clean.indexOf(marker);
+          if (idx > -1) {
+            return clean.slice(0, idx);
+          }
+          return clean;
+        }
+
+        function addUniqueBase(list, value) {
+          var clean = String(value || '').trim().replace(/\/+$/, '');
+          if (!clean || list.indexOf(clean) !== -1) {
+            return;
+          }
+          list.push(clean);
+        }
+
+        function getApiBases() {
+          var bases = [];
+          var saved = String(localStorage.getItem(API_BASE_KEY) || '').trim();
+          var fromSms = deriveBaseUrlFromSmsApi(localStorage.getItem(SMS_API_KEY));
+
+          addUniqueBase(bases, saved);
+          addUniqueBase(bases, fromSms);
+
+          if (window && window.location && window.location.hostname) {
+            var host = String(window.location.hostname || '').trim();
+            var protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            if (host && host !== 'localhost' && host !== '127.0.0.1') {
+              addUniqueBase(bases, protocol + '//' + host + ':3001');
+            }
+          }
+
+          addUniqueBase(bases, DEFAULT_API_BASE);
+          addUniqueBase(bases, 'http://127.0.0.1:3001');
+          addUniqueBase(bases, 'http://10.0.2.2:3001');
+
+          return bases;
+        }
+
+        function fetchWithTimeout(url, options, timeoutMs) {
+          return new Promise(function (resolve, reject) {
+            var timer = window.setTimeout(function () {
+              reject(new Error('Request timeout'));
+            }, timeoutMs);
+
+            fetch(url, options).then(function (response) {
+              window.clearTimeout(timer);
+              resolve(response);
+            }).catch(function (error) {
+              window.clearTimeout(timer);
+              reject(error);
+            });
+          });
+        }
+
+        async function requestAccountApi(path, options) {
+          var bases = getApiBases();
+          var timeoutMs = 1200;
+
+          var attempts = bases.map(function (base) {
+            return fetchWithTimeout(base + path, options, timeoutMs);
+          });
+
+          if (!Promise.any) {
+            var lastError = null;
+            for (var i = 0; i < attempts.length; i += 1) {
+              try {
+                return await attempts[i];
+              } catch (error) {
+                lastError = error;
+              }
+            }
+            throw lastError || new Error('API connection failed');
+          }
+
+          try {
+            return await Promise.any(attempts);
+          } catch (error) {
+            throw new Error('API connection failed');
+          }
+        }
+
+        function readJSON(storageKey, fallback) {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(storageKey) || '');
+            return parsed && typeof parsed === 'object' ? parsed : fallback;
+          } catch (error) {
+            return fallback;
+          }
+        }
+
+        function writeJSON(storageKey, value) {
+          localStorage.setItem(storageKey, JSON.stringify(value));
+        }
+
+        function utf8ToHex(str) {
+          return Array.from(new TextEncoder().encode(str)).map(function (b) {
+            return b.toString(16).padStart(2, '0');
+          }).join('');
+        }
+
+        async function sha256Hex(value) {
+          var bytes = new TextEncoder().encode(String(value || ''));
+          var hash = await crypto.subtle.digest('SHA-256', bytes);
+          return Array.from(new Uint8Array(hash)).map(function (b) {
+            return b.toString(16).padStart(2, '0');
+          }).join('');
+        }
+
+        function isStrongPassword(value) {
+          if (value.length < 8) {
+            return false;
+          }
+          var hasLetter = /[A-Za-z]/.test(value);
+          var hasNumber = /\d/.test(value);
+          return hasLetter && hasNumber;
+        }
+
+        function normalizePhone(value) {
+          return String(value || '').replace(/\s+/g, '').trim();
+        }
+
+        function formatPhoneForDisplay(value) {
+          var phone = normalizePhone(value);
+          return phone || 'Not set';
+        }
+
+        function splitName(fullName) {
+          var clean = String(fullName || '').replace(/\s+/g, ' ').trim();
+          if (!clean) {
+            return { firstName: '', lastName: '' };
+          }
+          var parts = clean.split(' ');
+          return {
+            firstName: parts.shift() || '',
+            lastName: parts.join(' ')
+          };
+        }
+
+        function boolLabel(value) {
+          if (value === true) {
+            return 'Enabled';
+          }
+          if (value === false) {
+            return 'Not enabled';
+          }
+          return 'Not set';
+        }
+
+        function normalizeTag(value) {
+          return String(value || '').trim().replace(/^@+/, '').toLowerCase();
+        }
+
+        function normalizeEmail(value) {
+          return String(value || '').trim().toLowerCase();
+        }
+
+        function isValidEmail(value) {
+          var emailValue = normalizeEmail(value);
+          if (!emailValue || emailValue.length > 254 || /\s/.test(emailValue)) {
+            return false;
+          }
+          if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(emailValue)) {
+            return false;
+          }
+          if (emailValue.indexOf('..') !== -1) {
+            return false;
+          }
+          var atIndex = emailValue.indexOf('@');
+          var localPart = emailValue.slice(0, atIndex);
+          var domain = emailValue.slice(atIndex + 1);
+          if (!localPart || localPart.length > 64 || !domain) {
+            return false;
+          }
+          if (domain.charAt(0) === '.' || domain.charAt(domain.length - 1) === '.') {
+            return false;
+          }
+          return true;
+        }
+
+        function getTagOwnerId(fallbackUsername) {
+          var currentUser = String(localStorage.getItem(CURRENT_USER_KEY) || '').trim();
+          if (currentUser) {
+            return currentUser;
+          }
+          if (fallbackUsername) {
+            return String(fallbackUsername).trim();
+          }
+          return String(credential.username || '').trim() || 'unknown_user';
+        }
+
+        function claimTag(rawTag, ownerId) {
+          var currentTagRaw = String(localStorage.getItem(TAG_KEY) || '').trim();
+          var currentTag = normalizeTag(currentTagRaw);
+          var wantedTag = normalizeTag(rawTag);
+          var registry = readJSON(TAG_REGISTRY_KEY, {});
+
+          if (!wantedTag) {
+            return { ok: false, reason: 'invalid' };
+          }
+
+          var existingOwner = String(registry[wantedTag] || '');
+          if (existingOwner && existingOwner !== ownerId) {
+            return { ok: false, reason: 'taken' };
+          }
+
+          if (currentTag && registry[currentTag] === ownerId && currentTag !== wantedTag) {
+            delete registry[currentTag];
+          }
+
+          registry[wantedTag] = ownerId;
+          writeJSON(TAG_REGISTRY_KEY, registry);
+          localStorage.setItem(TAG_KEY, rawTag.replace(/^@+/, ''));
+          return { ok: true };
+        }
+
+        var signupName = readJSON(NAME_KEY, {});
+        var signupAddress = readJSON(ADDRESS_KEY, {});
+        var setupPrefs = readJSON(SETUP_KEY, {});
+        var credential = readJSON(CRED_KEY, {});
+        var dob = readJSON(DOB_KEY, {});
+
+        var firstName = String(signupName.firstName || '').trim();
+        var lastName = String(signupName.lastName || '').trim();
+        var fullName = (firstName + ' ' + lastName).trim() || 'User Name';
+        var lloydsTag = String(localStorage.getItem(TAG_KEY) || '').trim();
+        var username = String(credential.username || '').trim();
+        var email = String(localStorage.getItem(EMAIL_KEY) || '').trim();
+        var phone = String(localStorage.getItem(PHONE_KEY) || '').trim();
+        var country = String(localStorage.getItem(COUNTRY_KEY) || '').trim();
+        var dobIso = String(dob.iso || '').trim();
+
+        var config = {
+          personal_details: {
+            title: 'Personal details',
+            intro: '',
+            fields: [
+              { id: 'full_name', label: 'Full name', value: fullName },
+              { id: 'lloyds_tag', label: 'Lloydbe nickname', value: lloydsTag ? lloydsTag.replace(/^@+/, '') : '' },
+              { id: 'username', label: 'Username', value: username },
+              { id: 'email', label: 'Email', value: email || '' },
+              { id: 'phone', label: 'Phone', value: formatPhoneForDisplay(phone) },
+              { id: 'country', label: 'Country of residence', value: country || 'Not set' },
+              { id: 'dob', label: 'Date of birth', value: dobIso || 'Not set' }
+            ]
+          },
+          address: {
+            title: 'Address',
+            intro: 'Edit your home and billing address.',
+            fields: [
+              { id: 'line1', label: 'Address line 1', value: String(signupAddress.line1 || '') },
+              { id: 'line2', label: 'Address line 2', value: String(signupAddress.line2 || '') },
+              { id: 'city', label: 'City', value: String(signupAddress.city || '') },
+              { id: 'postcode', label: 'Postcode', value: String(signupAddress.postcode || '') }
+            ]
+          },
+          cards: {
+            title: 'Cards',
+            intro: 'Manage card controls and limits.',
+            fields: [
+              { id: 'daily_limit', label: 'Daily card limit (£)', value: '250' },
+              { id: 'online_enabled', label: 'Online payments', value: 'On' }
+            ]
+          },
+          bank_accounts: {
+            title: 'Bank accounts',
+            intro: 'Manage linked accounts and payouts.',
+            fields: [
+              { id: 'primary_account', label: 'Primary account', value: 'Lloyds ****4127' },
+              { id: 'payout_speed', label: 'Payout speed', value: 'Instant' }
+            ]
+          },
+          spending_limits: {
+            title: 'Spending limits',
+            intro: 'Set your budget guardrails.',
+            fields: [
+              { id: 'daily_spend', label: 'Daily spend cap (£)', value: '120' },
+              { id: 'monthly_spend', label: 'Monthly spend cap (£)', value: '1500' }
+            ]
+          },
+          biometrics: {
+            title: 'Face ID / Touch ID',
+            intro: 'Control biometric sign in.',
+            fields: [
+              { id: 'biometric_enabled', label: 'Biometric login', value: boolLabel(setupPrefs.faceId) }
+            ]
+          },
+          tx_notifications: {
+            title: 'Transaction notifications',
+            intro: 'Choose when to receive spend alerts.',
+            fields: [
+              { id: 'alerts', label: 'Spend alerts', value: boolLabel(setupPrefs.notifications) }
+            ]
+          },
+          change_password: {
+            title: 'Change password',
+            intro: 'Update your sign-in password.',
+            fields: [
+              { id: 'current_password', label: 'Current password', value: '', type: 'password' },
+              { id: 'new_password', label: 'New password', value: '', type: 'password' },
+              { id: 'confirm_password', label: 'Confirm new password', value: '', type: 'password' }
+            ]
+          },
+          help_center: {
+            title: 'Help center',
+            intro: 'Get support and contact options.',
+            infoText: 'Chat support is available 24/7. Email: help@lloydbe.app'
+          },
+          legal_privacy: {
+            title: 'Legal and privacy',
+            intro: 'Review terms and privacy controls.',
+            infoText: 'Terms of service, privacy policy, and data controls are available here.'
+          }
+        };
+
+        var current = config[key] || config.personal_details;
+
+        titleEl.textContent = current.title;
+        introEl.textContent = current.intro || '';
+        introEl.hidden = !current.intro;
+
+        if (current.fields && current.fields.length) {
+          current.fields.forEach(function (field) {
+            var label = document.createElement('label');
+            label.className = 'field-block';
+
+            var title = document.createElement('span');
+            title.className = 'field-title';
+            title.textContent = field.label;
+
+            var input = document.createElement('input');
+            input.className = 'input';
+            input.id = 'field_' + field.id;
+            input.dataset.fieldId = field.id;
+            input.type = field.type || (/pass(word|code)/i.test(field.id) ? 'password' : 'text');
+            input.value = field.value || '';
+            input.autocomplete = 'off';
+
+            label.appendChild(title);
+
+            if (field.id === 'lloyds_tag') {
+              var fixedWrap = document.createElement('div');
+              fixedWrap.className = 'fixed-at-input';
+
+              var fixedPrefix = document.createElement('span');
+              fixedPrefix.className = 'fixed-at-prefix';
+              fixedPrefix.textContent = '@';
+
+              fixedWrap.appendChild(fixedPrefix);
+              fixedWrap.appendChild(input);
+              label.appendChild(fixedWrap);
+            } else {
+              label.appendChild(input);
+            }
+
+            formEl.appendChild(label);
+          });
+
+          infoTextEl.style.display = 'none';
+          saveBtn.hidden = false;
+        } else {
+          formEl.style.display = 'none';
+          infoTextEl.textContent = current.infoText || '';
+          infoTextEl.style.display = current.infoText ? 'block' : 'none';
+          saveBtn.hidden = true;
+        }
+
+        setupPasswordToggles();
+
+        saveBtn.addEventListener('click', async function () {
+          setStatus('', false);
+
+          if (key === 'change_password') {
+            var existingCredential = readJSON(CRED_KEY, null);
+            if (!existingCredential || !existingCredential.username) {
+              setStatus('No account credentials found. Please sign up first.', true);
+              return;
+            }
+
+            var currentPassword = (document.getElementById('field_current_password').value || '').trim();
+            var newPassword = (document.getElementById('field_new_password').value || '').trim();
+            var confirmPassword = (document.getElementById('field_confirm_password').value || '').trim();
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+              setStatus('Enter current password, new password, and confirmation.', true);
+              return;
+            }
+
+            if (newPassword !== confirmPassword) {
+              setStatus('New password and confirmation do not match.', true);
+              return;
+            }
+
+            if (!isStrongPassword(newPassword)) {
+              setStatus('Use at least 8 characters with one letter and one number.', true);
+              return;
+            }
+
+            try {
+              var response = await requestAccountApi('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  username: existingCredential.username,
+                  currentPassword: currentPassword,
+                  newPassword: newPassword
+                })
+              });
+
+              var payload = null;
+              try {
+                payload = await response.json();
+              } catch (parseError) {
+                payload = null;
+              }
+
+              if (!response.ok || !payload || payload.ok !== true) {
+                setStatus((payload && payload.error) || 'Unable to change password right now. Please try again.', true);
+                return;
+              }
+
+              writeJSON(ATTEMPT_KEY, { count: 0, lockUntil: 0 });
+              document.getElementById('field_current_password').value = '';
+              document.getElementById('field_new_password').value = '';
+              document.getElementById('field_confirm_password').value = '';
+              setStatus('Password updated successfully.', false);
+            } catch (error) {
+              try {
+                var localHash = await sha256Hex(currentPassword + ':' + existingCredential.salt);
+                if (localHash !== existingCredential.passHash) {
+                  setStatus('Current password is incorrect.', true);
+                  return;
+                }
+
+                var newSalt = utf8ToHex(Date.now() + ':' + Math.random()).slice(0, 16);
+                var newHash = await sha256Hex(newPassword + ':' + newSalt);
+                writeJSON(CRED_KEY, {
+                  username: existingCredential.username,
+                  passHash: newHash,
+                  salt: newSalt
+                });
+                writeJSON(ATTEMPT_KEY, { count: 0, lockUntil: 0 });
+                document.getElementById('field_current_password').value = '';
+                document.getElementById('field_new_password').value = '';
+                document.getElementById('field_confirm_password').value = '';
+                setStatus('Password updated on this device (offline mode).', false);
+              } catch (fallbackError) {
+                setStatus('Unable to connect to account service. Start backend on port 3001 or set lloydbeApiBaseUrl.', true);
+              }
+            }
+
+            return;
+          }
+
+          if (key === 'personal_details') {
+            var fullNameInput = (document.getElementById('field_full_name').value || '').trim();
+            var tagInput = (document.getElementById('field_lloyds_tag').value || '').trim().replace(/^@+/, '');
+            var usernameInput = (document.getElementById('field_username').value || '').trim();
+            var emailInput = normalizeEmail((document.getElementById('field_email').value || ''));
+            var phoneInput = (document.getElementById('field_phone').value || '').trim();
+            var countryInput = (document.getElementById('field_country').value || '').trim();
+            var dobInput = (document.getElementById('field_dob').value || '').trim();
+
+            var parts = splitName(fullNameInput);
+            writeJSON(NAME_KEY, {
+              firstName: parts.firstName,
+              lastName: parts.lastName,
+              savedAt: Date.now()
+            });
+
+            if (!tagInput || /[^a-zA-Z0-9_.-]/.test(tagInput) || tagInput.length < 3 || tagInput.length > 24) {
+              setStatus('Use 3-24 characters for your Lloydbe nickname.', true);
+              return;
+            }
+
+            if (!isValidEmail(emailInput)) {
+              setStatus('Enter a valid email address to save your profile.', true);
+              return;
+            }
+
+            var ownerId = getTagOwnerId(usernameInput);
+            var tagResult = claimTag(tagInput, ownerId);
+            if (!tagResult.ok && tagResult.reason === 'taken') {
+              setStatus('Pick another name, this one is already being used.', true);
+              return;
+            }
+            localStorage.setItem(CURRENT_USER_KEY, ownerId);
+            localStorage.setItem(EMAIL_KEY, emailInput);
+            localStorage.setItem(PHONE_KEY, phoneInput);
+            localStorage.setItem(COUNTRY_KEY, countryInput);
+            writeJSON(DOB_KEY, {
+              iso: dobInput,
+              savedAt: Date.now()
+            });
+
+            var cred = readJSON(CRED_KEY, null);
+            if (cred && usernameInput) {
+              cred.username = usernameInput;
+              writeJSON(CRED_KEY, cred);
+            }
+          }
+
+          if (key === 'address') {
+            writeJSON(ADDRESS_KEY, {
+              line1: (document.getElementById('field_line1').value || '').trim(),
+              line2: (document.getElementById('field_line2').value || '').trim(),
+              city: (document.getElementById('field_city').value || '').trim(),
+              postcode: (document.getElementById('field_postcode').value || '').trim(),
+              savedAt: Date.now()
+            });
+          }
+
+          if (key === 'biometrics' || key === 'tx_notifications') {
+            var prefs = readJSON(SETUP_KEY, {});
+            if (key === 'biometrics') {
+              var biometricsValue = String(document.getElementById('field_biometric_enabled').value || '').toLowerCase();
+              prefs.faceId = biometricsValue.indexOf('en') === 0 || biometricsValue === 'on' || biometricsValue === 'true' || biometricsValue === 'yes';
+            }
+            if (key === 'tx_notifications') {
+              var notificationsValue = String(document.getElementById('field_alerts').value || '').toLowerCase();
+              prefs.notifications = notificationsValue.indexOf('en') === 0 || notificationsValue === 'on' || notificationsValue === 'true' || notificationsValue === 'yes';
+            }
+            writeJSON(SETUP_KEY, prefs);
+          }
+
+          saveBtn.textContent = 'Saved';
+          window.setTimeout(function () {
+            saveBtn.textContent = 'Save changes';
+          }, 900);
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nearby Friends</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen social-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="SocialPage.html">◀ Back</a>
+        <div class="page-title">Nearby Friends</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <div class="request-link-card" style="margin-bottom: 12px;">
+          <div>
+            <strong id="nearbyStatusTitle">Nearby is on</strong>
+            <div id="nearbyStatusSub" class="request-link-sub">Showing people within ~1 km.</div>
+          </div>
+          <label class="switch-control" for="nearbyToggle">
+            <input id="nearbyToggle" type="checkbox" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div id="nearbyOffState" class="request-link-card" hidden>
+          <div>
+            <strong>Location hidden</strong>
+            <div class="request-link-sub">Turn Nearby on to share your location and see people around you.</div>
+          </div>
+        </div>
+
+        <div id="nearbyList"></div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbeNearbyVisible';
+        var nearby = [
+          { name: 'Amy Miller', handle: '@amy_m', distance: '220m', color: '#ffcfa8' },
+          { name: 'Ben King', handle: '@benny_k', distance: '480m', color: '#f6c3a0' },
+          { name: 'Zoe Smith', handle: '@zoe_finance', distance: '900m', color: '#cbb8ff' }
+        ];
+
+        var list = document.getElementById('nearbyList');
+        var toggle = document.getElementById('nearbyToggle');
+        var offState = document.getElementById('nearbyOffState');
+        var statusTitle = document.getElementById('nearbyStatusTitle');
+        var statusSub = document.getElementById('nearbyStatusSub');
+
+        function initials(name) {
+          var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+          if (!parts.length) {
+            return 'NA';
+          }
+          if (parts.length === 1) {
+            return parts[0].slice(0, 2).toUpperCase();
+          }
+          return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+
+        function loadVisibility() {
+          try {
+            var value = localStorage.getItem(STORAGE_KEY);
+            if (value === null) {
+              return true;
+            }
+            return value === '1';
+          } catch (error) {
+            return true;
+          }
+        }
+
+        function saveVisibility(isOn) {
+          localStorage.setItem(STORAGE_KEY, isOn ? '1' : '0');
+        }
+
+        function renderList() {
+          list.innerHTML = '';
+
+          nearby.forEach(function (friend) {
+            var row = document.createElement('div');
+            row.className = 'list-item';
+
+            var initialsEl = document.createElement('div');
+            initialsEl.className = 'initials';
+            initialsEl.style.background = friend.color;
+            initialsEl.textContent = initials(friend.name);
+
+            var details = document.createElement('div');
+            details.className = 'details';
+            var nameEl = document.createElement('strong');
+            nameEl.textContent = friend.name;
+            var handleEl = document.createElement('small');
+            handleEl.textContent = ' ' + (friend.handle || '') + ' · ' + friend.distance;
+            details.appendChild(nameEl);
+            details.appendChild(handleEl);
+
+            var pingBtn = document.createElement('button');
+            pingBtn.className = 'btn request-send-btn';
+            pingBtn.type = 'button';
+            pingBtn.textContent = 'Ping';
+            pingBtn.addEventListener('click', function () {
+              pingBtn.textContent = 'Sent';
+            });
+
+            row.appendChild(initialsEl);
+            row.appendChild(details);
+            row.appendChild(pingBtn);
+            list.appendChild(row);
+          });
+        }
+
+        function syncVisibility() {
+          var isOn = toggle.checked;
+          saveVisibility(isOn);
+          list.hidden = !isOn;
+
+          statusTitle.textContent = isOn ? 'Nearby is on' : 'Nearby is off';
+          statusSub.textContent = isOn
+            ? "Showing people within ~1 km."
+            : "Turn Nearby on to share your location.";
+
+          offState.hidden = isOn;
+          offState.style.display = isOn ? "none" : "block";
+        }
+
+        toggle.checked = loadVisibility();
+        toggle.addEventListener('change', syncVisibility);
+
+        renderList();
+        syncVisibility();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Friend Detail</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen social-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="SocialPage.html">◀ Back</a>
+        <div class="page-title">Friend</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <div class="send-recipient-hero">
+          <div id="friendInitials" class="initials" style="background: #d8cdfa;">NA</div>
+          <div class="details">
+            <strong id="friendName">Friend</strong>
+            <small id="friendHandle">@friend</small>
+          </div>
+        </div>
+
+        <button id="sendMoneyBtn" class="btn primary" type="button" style="width: 100%; margin-top: 10px;">Send money</button>
+
+        <div class="section-title" style="margin-top: 16px;">
+          <span>Recent transactions</span>
+        </div>
+        <div id="friendTxList"></div>
+        <div id="friendTxEmpty" class="tx-no-results" hidden>No transactions with this friend yet.</div>
+        <button id="removeFriendBtn" class="request-send-btn" type="button" style="width: 100%; margin-top: 14px; border: none; border-radius: 999px; background: #efe9e0; color: #4c433a; font-weight: 700;">Remove friend</button>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var TRANSACTIONS_KEY = 'lloydbeTransactionsV1';
+        var FRIENDS_KEY = 'lloydbeFriends';
+        var REGISTRY_KEY = 'lloydbeTagRegistryV1';
+        var CURRENT_USER_KEY = 'lloydbeCurrentUserV1';
+        var params = new URLSearchParams(window.location.search);
+
+        var friendId = String(params.get('id') || '').trim();
+        var friendName = String(params.get('name') || '').trim() || 'Friend';
+        var friendHandle = String(params.get('handle') || '').trim() || '@friend';
+        var friendInitials = String(params.get('initials') || '').trim() || 'NA';
+        var friendColor = String(params.get('color') || '').trim() || '#d8cdfa';
+
+        var initialsEl = document.getElementById('friendInitials');
+        var nameEl = document.getElementById('friendName');
+        var handleEl = document.getElementById('friendHandle');
+        var sendBtn = document.getElementById('sendMoneyBtn');
+        var txListEl = document.getElementById('friendTxList');
+        var txEmptyEl = document.getElementById('friendTxEmpty');
+        var removeBtn = document.getElementById('removeFriendBtn');
+
+        initialsEl.textContent = friendInitials.slice(0, 2).toUpperCase();
+        initialsEl.style.background = friendColor;
+        nameEl.textContent = friendName;
+        handleEl.textContent = friendHandle;
+
+        function formatMoney(value) {
+          var amount = Number(value);
+          if (!Number.isFinite(amount)) {
+            amount = 0;
+          }
+          return '£' + Math.abs(amount).toFixed(2);
+        }
+
+        function readTransactions() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function scopedKeyForUser(baseKey, owner) {
+          if (window.LloydbeUserScope && typeof window.LloydbeUserScope.toScopedKey === 'function') {
+            return window.LloydbeUserScope.toScopedKey(baseKey, owner);
+          }
+          return baseKey + '::user::' + String(owner || '').trim().toLowerCase();
+        }
+
+        function getCurrentUser() {
+          return String(localStorage.getItem(CURRENT_USER_KEY) || '').trim().toLowerCase();
+        }
+
+        function ownerFromHandle(handleValue) {
+          var clean = String(handleValue || '').trim().replace(/^@+/, '').toLowerCase();
+          if (!clean) {
+            return '';
+          }
+          try {
+            var parsed = JSON.parse(localStorage.getItem(REGISTRY_KEY) || '{}');
+            var registry = parsed && typeof parsed === 'object' ? parsed : {};
+            return String(registry[clean] || '').trim().toLowerCase();
+          } catch (error) {
+            return '';
+          }
+        }
+
+        function loadFriends(owner) {
+          try {
+            var raw = localStorage.getItem(scopedKeyForUser(FRIENDS_KEY, owner));
+            var parsed = JSON.parse(raw || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveFriends(owner, items) {
+          localStorage.setItem(scopedKeyForUser(FRIENDS_KEY, owner), JSON.stringify(items));
+        }
+
+        function removeFriendByHandle(owner, handleValue) {
+          var cleanHandle = String(handleValue || '').trim().replace(/^@+/, '').toLowerCase();
+          var next = loadFriends(owner).filter(function (item) {
+            return String(item.handle || '').trim().replace(/^@+/, '').toLowerCase() !== cleanHandle;
+          });
+          saveFriends(owner, next);
+        }
+
+        function normalizeName(value) {
+          return String(value || '').trim().toLowerCase();
+        }
+
+        function openSendPage() {
+          var sendParams = new URLSearchParams();
+          sendParams.set('id', friendId);
+          sendParams.set('name', friendName);
+          sendParams.set('detail', friendHandle);
+          sendParams.set('initials', friendInitials);
+          sendParams.set('color', friendColor);
+          window.location.href = 'SendRecipientPage.html?' + sendParams.toString();
+        }
+
+        function removeFriend() {
+          var currentOwner = getCurrentUser();
+          if (!currentOwner) {
+            window.location.href = 'SocialPage.html';
+            return;
+          }
+
+          removeFriendByHandle(currentOwner, friendHandle);
+
+          var friendOwner = ownerFromHandle(friendHandle);
+          if (friendOwner) {
+            var currentHandle = '';
+            try {
+              currentHandle = String(localStorage.getItem(scopedKeyForUser('lloydbeLloydsTagV1', currentOwner)) || '').trim();
+            } catch (error) {
+              currentHandle = '';
+            }
+            if (currentHandle) {
+              removeFriendByHandle(friendOwner, '@' + currentHandle.replace(/^@+/, ''));
+            }
+          }
+
+          window.location.href = 'SocialPage.html';
+        }
+
+        function renderTransactions() {
+          var targetName = normalizeName(friendName);
+          var items = readTransactions().filter(function (tx) {
+            return normalizeName(tx && tx.name) === targetName;
+          }).slice(0, 20);
+
+          txListEl.innerHTML = '';
+          txEmptyEl.hidden = items.length > 0;
+
+          items.forEach(function (tx) {
+            var row = document.createElement('div');
+            row.className = 'list-item';
+
+            var details = document.createElement('div');
+            details.className = 'details';
+            var title = document.createElement('strong');
+            title.textContent = tx.direction === 'in' ? 'Received' : 'Sent';
+            var subtitle = document.createElement('small');
+            var note = String(tx.note || '').trim();
+            subtitle.textContent = ' ' + (note || (tx.type || 'Lloydbe transfer'));
+            details.appendChild(title);
+            details.appendChild(subtitle);
+
+            var amount = document.createElement('div');
+            amount.className = 'amount';
+            amount.textContent = (tx.direction === 'in' ? '+' : '-') + formatMoney(tx.amount);
+            amount.style.color = tx.direction === 'in' ? '#24a46d' : '#d45b5b';
+
+            row.appendChild(details);
+            row.appendChild(amount);
+            txListEl.appendChild(row);
+          });
+        }
+
+        sendBtn.addEventListener('click', openSendPage);
+        removeBtn.addEventListener('click', removeFriend);
+        renderTransactions();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create Pot</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="HomePage.html">◀ Back</a>
+        <div class="page-title">Create Pot</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: 0;">
+        <div style="color: var(--muted); font-size: 12px;">Personalize your saving goal</div>
+      </section>
+
+      <form class="form create-pot-form">
+        <label class="field-block">
+          <div class="field-title">Color</div>
+          <div class="color-picker" role="radiogroup" aria-label="Choose pot color">
+            <input id="pot-color-forest" type="radio" name="potColor" value="Forest" checked />
+            <label class="color-swatch" for="pot-color-forest" style="--swatch: var(--green-forest);" aria-label="Forest"></label>
+
+            <input id="pot-color-pine" type="radio" name="potColor" value="Pine" />
+            <label class="color-swatch" for="pot-color-pine" style="--swatch: var(--green-pine);" aria-label="Pine"></label>
+
+            <input id="pot-color-sage" type="radio" name="potColor" value="Sage" />
+            <label class="color-swatch" for="pot-color-sage" style="--swatch: var(--green-sage);" aria-label="Sage"></label>
+
+            <input id="pot-color-jade" type="radio" name="potColor" value="Jade" />
+            <label class="color-swatch" for="pot-color-jade" style="--swatch: var(--green-jade);" aria-label="Jade"></label>
+
+            <input id="pot-color-meadow" type="radio" name="potColor" value="Meadow" />
+            <label class="color-swatch" for="pot-color-meadow" style="--swatch: var(--green-meadow);" aria-label="Meadow"></label>
+
+            <input id="pot-color-evergreen" type="radio" name="potColor" value="Evergreen" />
+            <label class="color-swatch" for="pot-color-evergreen" style="--swatch: var(--green-evergreen);" aria-label="Evergreen"></label>
+          </div>
+          <small class="field-note">Selected: <span id="selectedColorLabel">Forest</span></small>
+        </label>
+
+        <label class="field-block">
+          <div class="field-title">Name your Pot</div>
+          <input id="potName" class="input" placeholder="Holiday" />
+        </label>
+
+        <label class="field-block">
+          <div class="field-title">Pot icon</div>
+          <select id="potIcon" class="input" aria-label="Choose a pot icon">
+            <option value="✈️">✈️ Travel</option>
+            <option value="🎂">🎂 Birthday</option>
+            <option value="🎓">🎓 Education</option>
+            <option value="🚗">🚗 Car</option>
+            <option value="🏠">🏠 Home</option>
+            <option value="💍">💍 Wedding</option>
+            <option value="🛍️">🛍️ Shopping</option>
+            <option value="🧳">🧳 Trip</option>
+          </select>
+        </label>
+
+        <label class="field-block">
+          <div class="field-title">Goal</div>
+          <input id="potGoal" class="input" type="number" min="0" step="10" value="0" placeholder="£" />
+        </label>
+
+        <div class="toggle-row">
+          <div class="field-title" style="margin: 0;">Invite people</div>
+          <label class="switch-control" for="inviteToggle">
+            <input id="inviteToggle" type="checkbox" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div id="inviteOptions" class="invite-options" hidden>
+          <label class="friend-pill"><input type="checkbox" value="Amy Miller" /><span>Amy Miller</span></label>
+          <label class="friend-pill"><input type="checkbox" value="John Doe" /><span>John Doe</span></label>
+          <label class="friend-pill"><input type="checkbox" value="Zoe Smith" /><span>Zoe Smith</span></label>
+          <label class="friend-pill"><input type="checkbox" value="Ben King" /><span>Ben King</span></label>
+          <label class="friend-pill"><input type="checkbox" value="Sarah Lee" /><span>Sarah Lee</span></label>
+        </div>
+
+        <div class="toggle-row">
+          <div class="field-title" style="margin: 0;">Auto-save</div>
+          <label class="switch-control" for="autosaveToggle">
+            <input id="autosaveToggle" type="checkbox" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div id="autosaveOptions" class="autosave-options" hidden>
+          <label><input type="radio" name="autosaveFrequency" value="Daily" checked /><span>Daily</span></label>
+          <label><input type="radio" name="autosaveFrequency" value="Weekly" /><span>Weekly</span></label>
+          <label><input type="radio" name="autosaveFrequency" value="Monthly" /><span>Monthly</span></label>
+        </div>
+
+        <label id="autosaveAmountWrap" class="field-block" hidden>
+          <div class="field-title">Auto-save amount (£)</div>
+          <input id="autosaveAmount" class="input" type="number" min="0.01" step="0.01" placeholder="10.00" />
+          <small id="autosaveAmountError" class="field-note" style="color:#c14f4f; display:none;">Enter an auto-save amount greater than 0.</small>
+        </label>
+
+        <label class="field-block">
+          <div class="field-title">Goal deadline</div>
+          <input id="goalDeadline" class="input" type="date" aria-label="Goal deadline" />
+        </label>
+
+        <div class="toggle-row">
+          <div class="field-title" style="margin: 0;">Reminders</div>
+          <label class="switch-control" for="remindersToggle">
+            <input id="remindersToggle" type="checkbox" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div id="reminderOptions" class="autosave-options" hidden>
+          <label><input type="radio" name="reminderFrequency" value="Daily" checked /><span>Daily</span></label>
+          <label><input type="radio" name="reminderFrequency" value="Weekly" /><span>Weekly</span></label>
+          <label><input type="radio" name="reminderFrequency" value="Monthly" /><span>Monthly</span></label>
+        </div>
+
+        <button id="createPotBtn" class="cta" type="button">Create</button>
+      </form>
+    </div>
+
+    <nav class="bottom-nav">
+      <a class="nav-item active" href="HomePage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <path d="M3 10.5l9-7 9 7" />
+          <path d="M5 9.5V20h14V9.5" />
+        </svg>
+        <span>HOME</span>
+      </a>
+      <a class="nav-item" href="TrendsPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4v8h8" />
+          <path d="M12 12l5.5 5.5" />
+        </svg>
+        <span>BUDGET</span>
+      </a>
+      <a class="nav-item social-tab" href="SocialPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="8" r="2.8" />
+          <circle cx="15.8" cy="8.4" r="2.4" />
+          <path d="M3.8 18.7c0-2.6 2.1-4.7 4.7-4.7h5.2c2.6 0 4.7 2.1 4.7 4.7 0 .8-.6 1.5-1.4 1.5H5.2c-.8 0-1.4-.7-1.4-1.5z" />
+        </svg>
+        <span>SOCIAL</span>
+      </a>
+      <a class="nav-item challenges-tab" href="ChallengesPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 5h8v3.6a4 4 0 0 1-8 0V5z" />
+          <path d="M8 7H6.5a2.5 2.5 0 0 0 0 5H8" />
+          <path d="M16 7h1.5a2.5 2.5 0 0 1 0 5H16" />
+          <path d="M12 12.6V16" />
+          <path d="M9.4 19h5.2" />
+        </svg>
+        <span>CHALLENGES</span>
+      </a>
+    </nav>
+
+        <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbePots';
+
+        var inviteToggle = document.getElementById('inviteToggle');
+        var autosaveToggle = document.getElementById('autosaveToggle');
+        var remindersToggle = document.getElementById('remindersToggle');
+        var inviteOptions = document.getElementById('inviteOptions');
+        var autosaveOptions = document.getElementById('autosaveOptions');
+        var reminderOptions = document.getElementById('reminderOptions');
+        var autosaveAmountWrap = document.getElementById('autosaveAmountWrap');
+        var autosaveAmountInput = document.getElementById('autosaveAmount');
+        var autosaveAmountError = document.getElementById('autosaveAmountError');
+        var colorLabel = document.getElementById('selectedColorLabel');
+        var colorRadios = Array.from(document.querySelectorAll('input[name="potColor"]'));
+
+        var potNameInput = document.getElementById('potName');
+        var potIconSelect = document.getElementById('potIcon');
+        var potGoalInput = document.getElementById('potGoal');
+        var deadlineInput = document.getElementById('goalDeadline');
+        var createButton = document.getElementById('createPotBtn');
+
+        function roundMoney(value) {
+          return Math.round(Number(value) * 100) / 100;
+        }
+
+        function syncToggleState() {
+          var inviteOpen = inviteToggle.checked;
+          var autosaveOpen = autosaveToggle.checked;
+          var remindersOpen = remindersToggle.checked;
+
+          inviteOptions.hidden = !inviteOpen;
+          inviteOptions.style.display = inviteOpen ? 'flex' : 'none';
+
+          autosaveOptions.hidden = !autosaveOpen;
+          autosaveOptions.style.display = autosaveOpen ? 'flex' : 'none';
+          autosaveAmountWrap.hidden = !autosaveOpen;
+          autosaveAmountWrap.style.display = autosaveOpen ? 'grid' : 'none';
+          reminderOptions.hidden = !remindersOpen;
+          reminderOptions.style.display = remindersOpen ? 'flex' : 'none';
+          if (!autosaveOpen && autosaveAmountError) {
+            autosaveAmountError.style.display = 'none';
+          }
+        }
+
+        function syncColorLabel() {
+          var selected = colorRadios.find(function (radio) {
+            return radio.checked;
+          });
+          colorLabel.textContent = selected ? selected.value : 'Forest';
+        }
+
+        function getSelectedColor() {
+          var selected = colorRadios.find(function (radio) {
+            return radio.checked;
+          });
+          return selected ? selected.value : 'Forest';
+        }
+
+        function getAutosaveFrequency() {
+          var selected = document.querySelector('input[name="autosaveFrequency"]:checked');
+          return selected ? selected.value : 'Daily';
+        }
+
+        function getReminderFrequency() {
+          var selected = document.querySelector('input[name="reminderFrequency"]:checked');
+          return selected ? selected.value : 'Daily';
+        }
+
+        function getInvitedFriends() {
+          return Array.from(inviteOptions.querySelectorAll('input[type="checkbox"]:checked')).map(function (input) {
+            return input.value;
+          });
+        }
+
+        function savePot() {
+          var name = (potNameInput.value || '').trim() || 'New Pot';
+          var icon = potIconSelect.value || '💰';
+          var goal = Number(potGoalInput.value || 0);
+          var autosaveAmount = Number(autosaveAmountInput && autosaveAmountInput.value);
+          var autosaveOn = autosaveToggle.checked;
+
+          if (autosaveOn && (!Number.isFinite(autosaveAmount) || autosaveAmount <= 0)) {
+            if (autosaveAmountError) {
+              autosaveAmountError.style.display = 'block';
+            }
+            if (autosaveAmountInput) {
+              autosaveAmountInput.focus();
+            }
+            return;
+          }
+          if (autosaveAmountError) {
+            autosaveAmountError.style.display = 'none';
+          }
+
+          var newPot = {
+            id: Date.now(),
+            name: name,
+            icon: icon,
+            goal: Number.isFinite(goal) ? goal : 0,
+            currentAmount: 0,
+            color: getSelectedColor(),
+            deadline: deadlineInput.value || '',
+            remindersOn: remindersToggle.checked,
+            reminderFrequency: remindersToggle.checked ? getReminderFrequency() : '',
+            inviteOn: inviteToggle.checked,
+            invitedFriends: inviteToggle.checked ? getInvitedFriends() : [],
+            autosaveOn: autosaveOn,
+            autosaveFrequency: autosaveOn ? getAutosaveFrequency() : '',
+            autosaveAmount: autosaveOn ? roundMoney(autosaveAmount) : 0,
+            autosaveLastRunAt: Date.now()
+          };
+
+          var existing = [];
+          try {
+            existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (!Array.isArray(existing)) {
+              existing = [];
+            }
+          } catch (error) {
+            existing = [];
+          }
+
+          existing.push(newPot);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+          window.location.href = 'HomePage.html';
+        }
+
+        inviteToggle.addEventListener('change', syncToggleState);
+        autosaveToggle.addEventListener('change', syncToggleState);
+        remindersToggle.addEventListener('change', syncToggleState);
+        colorRadios.forEach(function (radio) {
+          radio.addEventListener('change', syncColorLabel);
+        });
+
+        createButton.addEventListener('click', savePot);
+
+        syncToggleState();
+        syncColorLabel();
+      })();
+    </script>
+
+  </body>
+</html>

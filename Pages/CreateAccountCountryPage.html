@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create Account - Country</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen auth-screen login-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="CreateAccountEmailPage.html">◀ Back</a>
+        <div class="page-title">Country of Residence</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <main class="auth-main auth-main-login">
+        <div class="logo-wrap logo-wrap-login" aria-label="Lloydbe logo">
+          <img class="logo-image" src="../logo.png" alt="Lloydbe" />
+        </div>
+
+        <form id="countryForm" class="login-form" novalidate>
+          <p class="auth-helper">Terms and services vary by country. Select where you live.</p>
+
+          <div class="country-select-wrap">
+            <select id="countrySelect" class="auth-input country-select" required>
+              <option value="United Kingdom" selected>United Kingdom</option>
+              <option>United States</option>
+              <option>Canada</option>
+              <option>Ireland</option>
+              <option>France</option>
+              <option>Germany</option>
+              <option>Spain</option>
+              <option>Italy</option>
+              <option>Netherlands</option>
+              <option>Belgium</option>
+              <option>Switzerland</option>
+              <option>Portugal</option>
+              <option>Norway</option>
+              <option>Sweden</option>
+              <option>Denmark</option>
+              <option>Finland</option>
+              <option>Poland</option>
+              <option>Czech Republic</option>
+              <option>Austria</option>
+              <option>Greece</option>
+              <option>Romania</option>
+              <option>Hungary</option>
+              <option>Australia</option>
+              <option>New Zealand</option>
+              <option>Japan</option>
+              <option>South Korea</option>
+              <option>Singapore</option>
+              <option>India</option>
+              <option>United Arab Emirates</option>
+              <option>Saudi Arabia</option>
+              <option>South Africa</option>
+              <option>Brazil</option>
+              <option>Mexico</option>
+              <option>Argentina</option>
+              <option>Chile</option>
+              <option>Colombia</option>
+              <option>Nigeria</option>
+              <option>Kenya</option>
+              <option>Egypt</option>
+              <option>Turkey</option>
+              <option>Israel</option>
+              <option>Malaysia</option>
+              <option>Thailand</option>
+              <option>Philippines</option>
+              <option>Indonesia</option>
+              <option>Vietnam</option>
+              <option>Pakistan</option>
+              <option>Bangladesh</option>
+              <option>Sri Lanka</option>
+              <option>China</option>
+            </select>
+            <span class="country-select-arrow" aria-hidden="true">▾</span>
+          </div>
+
+          <div id="countryStatus" class="login-status" role="status" aria-live="polite"></div>
+          <button class="auth-btn" type="submit">Sign up securely</button>
+        </form>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var COUNTRY_KEY = 'lloydbeSignupCountryV1';
+        var form = document.getElementById('countryForm');
+        var select = document.getElementById('countrySelect');
+        var statusEl = document.getElementById('countryStatus');
+
+        function setStatus(message, isError) {
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('error', !!isError);
+        }
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+          var country = (select.value || '').trim();
+
+          if (!country) {
+            setStatus('Select your country to continue.', true);
+            return;
+          }
+
+          localStorage.setItem(COUNTRY_KEY, country);
+          setStatus('Country saved. Loading terms...', false);
+          window.setTimeout(function () {
+            window.location.href = 'CreateAccountTermsPage.html';
+          }, 220);
+        });
+      })();
+    </script>
+  </body>
+</html>

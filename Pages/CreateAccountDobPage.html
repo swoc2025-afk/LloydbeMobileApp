@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create Account - Date of Birth</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen auth-screen login-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="CreateAccountNamePage.html">◀ Back</a>
+        <div class="page-title">Date of Birth</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <main class="auth-main auth-main-login">
+        <div class="logo-wrap logo-wrap-login" aria-label="Lloydbe logo">
+          <img class="logo-image" src="../logo.png" alt="Lloydbe" />
+        </div>
+
+        <form id="dobForm" class="login-form" novalidate>
+          <p class="auth-helper">Enter your date of birth.</p>
+
+          <div class="dob-input-row" aria-label="Date of birth">
+            <div class="dob-field" data-target="dobDay">
+              <input id="dobDay" class="auth-input dob-input" type="text" inputmode="numeric" maxlength="2" placeholder="Day" autocomplete="bday-day" />
+            </div>
+            <div class="dob-field" data-target="dobMonth">
+              <input id="dobMonth" class="auth-input dob-input" type="text" inputmode="numeric" maxlength="2" placeholder="Month" autocomplete="bday-month" />
+            </div>
+            <div class="dob-field dob-year" data-target="dobYear">
+              <input id="dobYear" class="auth-input dob-input" type="text" inputmode="numeric" maxlength="4" placeholder="Year" autocomplete="bday-year" />
+            </div>
+          </div>
+
+          <div id="dobStatus" class="login-status" role="status" aria-live="polite"></div>
+          <button id="dobContinueBtn" class="auth-btn" type="submit" disabled>Continue</button>
+        </form>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var DOB_KEY = 'lloydbeSignupDobV1';
+        var form = document.getElementById('dobForm');
+        var dayInput = document.getElementById('dobDay');
+        var monthInput = document.getElementById('dobMonth');
+        var yearInput = document.getElementById('dobYear');
+        var statusEl = document.getElementById('dobStatus');
+        var continueBtn = document.getElementById('dobContinueBtn');
+        var fields = document.querySelectorAll('.dob-field');
+
+        fields.forEach(function (field) {
+          field.addEventListener('click', function () {
+            var targetId = field.getAttribute('data-target');
+            var input = targetId ? document.getElementById(targetId) : null;
+            if (input) {
+              input.focus();
+            }
+          });
+        });
+
+        dayInput.disabled = false;
+        dayInput.readOnly = false;
+        monthInput.disabled = false;
+        monthInput.readOnly = false;
+        yearInput.disabled = false;
+        yearInput.readOnly = false;
+
+        function setStatus(message, isError) {
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('error', !!isError);
+        }
+
+        function digitsOnly(value, maxLen) {
+          return String(value || '').replace(/\D/g, '').slice(0, maxLen);
+        }
+
+        function isPlausibleDate(day, month, year) {
+          var d = Number(day);
+          var m = Number(month);
+          var y = Number(year);
+
+          if (!Number.isInteger(d) || !Number.isInteger(m) || !Number.isInteger(y)) {
+            return false;
+          }
+          if (year.length !== 4 || y < 1900 || y > new Date().getFullYear()) {
+            return false;
+          }
+          if (m < 1 || m > 12 || d < 1 || d > 31) {
+            return false;
+          }
+
+          var date = new Date(y, m - 1, d);
+          return date.getFullYear() === y && date.getMonth() === (m - 1) && date.getDate() === d;
+        }
+
+        function updateValidity() {
+          var day = dayInput.value;
+          var month = monthInput.value;
+          var year = yearInput.value;
+
+          var allEntered = day.length > 0 && month.length > 0 && year.length > 0;
+          var valid = allEntered && isPlausibleDate(day, month, year);
+
+          continueBtn.disabled = !valid;
+
+          if (!allEntered) {
+            setStatus('', false);
+            return;
+          }
+
+          if (!valid) {
+            setStatus('Incorrect date', true);
+          } else {
+            setStatus('', false);
+          }
+        }
+
+        [dayInput, monthInput, yearInput].forEach(function (input) {
+          input.addEventListener('input', function () {
+            input.value = input === yearInput ? digitsOnly(input.value, 4) : digitsOnly(input.value, 2);
+            updateValidity();
+          });
+        });
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var day = dayInput.value;
+          var month = monthInput.value;
+          var year = yearInput.value;
+          var valid = isPlausibleDate(day, month, year);
+
+          if (!valid) {
+            continueBtn.disabled = true;
+            setStatus('Incorrect date', true);
+            return;
+          }
+
+          localStorage.setItem(DOB_KEY, JSON.stringify({
+            day: day.padStart(2, '0'),
+            month: month.padStart(2, '0'),
+            year: year,
+            iso: year + '-' + month.padStart(2, '0') + '-' + day.padStart(2, '0'),
+            savedAt: Date.now()
+          }));
+
+          window.location.href = 'CreateAccountAddressPage.html';
+        });
+      })();
+    </script>
+  </body>
+</html>

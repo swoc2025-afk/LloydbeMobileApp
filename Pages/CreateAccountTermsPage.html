@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create Account - Terms</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen auth-screen login-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="CreateAccountCountryPage.html">◀ Back</a>
+        <div class="page-title">Terms & Services</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <main class="auth-main auth-main-login">
+        <div class="logo-wrap logo-wrap-login" aria-label="Lloydbe logo">
+          <img class="logo-image" src="../logo.png" alt="Lloydbe" />
+        </div>
+
+        <section class="terms-card" aria-live="polite">
+          <p class="auth-helper" id="termsCountryLabel">Country: United Kingdom</p>
+          <h2 id="termsTitle" class="terms-title">UK Terms</h2>
+          <ul id="termsList" class="terms-list"></ul>
+        </section>
+
+        <form id="termsForm" class="login-form" novalidate>
+          <label class="terms-consent">
+            <input id="termsAgree" type="checkbox" />
+            <span>I agree to the terms and services for my country.</span>
+          </label>
+          <div id="termsStatus" class="login-status" role="status" aria-live="polite"></div>
+          <button id="termsContinueBtn" class="auth-btn" type="submit" disabled>Continue</button>
+        </form>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var COUNTRY_KEY = 'lloydbeSignupCountryV1';
+        var TERMS_ACCEPTED_KEY = 'lloydbeTermsAcceptedV1';
+
+        var country = (localStorage.getItem(COUNTRY_KEY) || 'United Kingdom').trim();
+        var countryLabelEl = document.getElementById('termsCountryLabel');
+        var titleEl = document.getElementById('termsTitle');
+        var listEl = document.getElementById('termsList');
+        var form = document.getElementById('termsForm');
+        var agreeInput = document.getElementById('termsAgree');
+        var continueBtn = document.getElementById('termsContinueBtn');
+        var statusEl = document.getElementById('termsStatus');
+
+        var euCountries = {
+          'Austria': true,
+          'Belgium': true,
+          'Bulgaria': true,
+          'Croatia': true,
+          'Cyprus': true,
+          'Czech Republic': true,
+          'Denmark': true,
+          'Estonia': true,
+          'Finland': true,
+          'France': true,
+          'Germany': true,
+          'Greece': true,
+          'Hungary': true,
+          'Ireland': true,
+          'Italy': true,
+          'Latvia': true,
+          'Lithuania': true,
+          'Luxembourg': true,
+          'Malta': true,
+          'Netherlands': true,
+          'Poland': true,
+          'Portugal': true,
+          'Romania': true,
+          'Slovakia': true,
+          'Slovenia': true,
+          'Spain': true,
+          'Sweden': true
+        };
+
+        function setStatus(message, isError) {
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('error', !!isError);
+        }
+
+        function renderTerms(targetCountry) {
+          var terms;
+
+          if (targetCountry === 'United Kingdom') {
+            terms = {
+              title: 'UK Terms',
+              bullets: [
+                'Your Lloydbe account is provided under UK consumer and payment regulations.',
+                'We process your data according to our UK privacy notice and anti-fraud requirements.',
+                'You must keep login codes private and notify us immediately of unauthorized access.'
+              ]
+            };
+          } else if (targetCountry === 'United States') {
+            terms = {
+              title: 'US Terms',
+              bullets: [
+                'Your account is offered under applicable US state and federal financial rules.',
+                'Electronic communications and disclosures may be provided digitally.',
+                'You are responsible for keeping account credentials secure at all times.'
+              ]
+            };
+          } else if (euCountries[targetCountry]) {
+            terms = {
+              title: 'EEA Terms',
+              bullets: [
+                'Your services are governed by EEA consumer and payments protections.',
+                'Your data is processed under GDPR and related local data requirements.',
+                'You must use secure credentials and report suspected misuse promptly.'
+              ]
+            };
+          } else {
+            terms = {
+              title: 'International Terms',
+              bullets: [
+                'Your Lloydbe account is subject to local laws in your country of residence.',
+                'Certain features may vary based on regional regulation and compliance checks.',
+                'You are responsible for protecting your login and verification information.'
+              ]
+            };
+          }
+
+          countryLabelEl.textContent = 'Country: ' + targetCountry;
+          titleEl.textContent = terms.title;
+          listEl.innerHTML = '';
+          terms.bullets.forEach(function (item) {
+            var li = document.createElement('li');
+            li.textContent = item;
+            listEl.appendChild(li);
+          });
+        }
+
+        renderTerms(country);
+
+        agreeInput.addEventListener('change', function () {
+          continueBtn.disabled = !agreeInput.checked;
+          if (agreeInput.checked) {
+            setStatus('', false);
+          }
+        });
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          if (!agreeInput.checked) {
+            setStatus('Please accept the terms to continue.', true);
+            return;
+          }
+
+          localStorage.setItem(TERMS_ACCEPTED_KEY, JSON.stringify({
+            country: country,
+            acceptedAt: Date.now()
+          }));
+
+          setStatus('Terms accepted. Continue signup...', false);
+          window.setTimeout(function () {
+            window.location.href = 'CreateAccountNamePage.html';
+          }, 220);
+        });
+      })();
+    </script>
+  </body>
+</html>

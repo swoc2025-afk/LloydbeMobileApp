@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Transactions</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen tx-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="HomePage.html">◀ Back</a>
+        <div class="page-title">All Transactions</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section tx-controls">
+        <label class="tx-search" for="txSearchInput">
+          <span aria-hidden="true">🔎</span>
+          <input id="txSearchInput" type="search" placeholder="Search transactions" autocomplete="off" />
+        </label>
+        <div class="tx-chip-row">
+          <button type="button" class="tx-chip tx-chip-btn active" data-filter="all">All</button>
+          <button type="button" class="tx-chip tx-chip-btn" data-filter="shopping">Shopping</button>
+          <button type="button" class="tx-chip tx-chip-btn" data-filter="food">Food</button>
+          <button type="button" class="tx-chip tx-chip-btn" data-filter="transport">Transport</button>
+          <button type="button" class="tx-chip tx-chip-btn" data-filter="entertainment">Entertainment</button>
+          <button type="button" class="tx-chip tx-chip-btn" data-filter="groceries">Groceries</button>
+        </div>
+      </section>
+
+      <section class="section tx-day-group">
+        <h3>Recent Transfers</h3>
+        <div id="dynamicTxList"></div>
+      </section>
+
+      <section class="section tx-day-group">
+        <h3>Today</h3>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=wings_dat" data-category="food dining">
+          <div class="tx-item-left">
+            <div class="tx-icon">🍗</div>
+            <div>
+              <strong>Wings & Dat</strong>
+              <small>Card payment</small>
+            </div>
+          </div>
+          <strong>£8.50</strong>
+        </a>
+      </section>
+
+      <section class="section tx-day-group">
+        <h3>Yesterday</h3>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=lidl" data-category="shopping groceries">
+          <div class="tx-item-left">
+            <div class="tx-icon">🧺</div>
+            <div>
+              <strong>Lidl</strong>
+              <small>Groceries</small>
+            </div>
+          </div>
+          <strong>£9.42</strong>
+        </a>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=costa" data-category="food drinks">
+          <div class="tx-item-left">
+            <div class="tx-icon">☕</div>
+            <div>
+              <strong>Costa</strong>
+              <small>Coffee</small>
+            </div>
+          </div>
+          <strong>£4.90</strong>
+        </a>
+      </section>
+
+      <section class="section tx-day-group">
+        <h3>22 Feb 2026</h3>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=uber" data-category="transport">
+          <div class="tx-item-left">
+            <div class="tx-icon">🚕</div>
+            <div>
+              <strong>Uber</strong>
+              <small>Ride</small>
+            </div>
+          </div>
+          <strong>£12.20</strong>
+        </a>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=odeon" data-category="entertainment">
+          <div class="tx-item-left">
+            <div class="tx-icon">🎬</div>
+            <div>
+              <strong>Odeon</strong>
+              <small>Cinema</small>
+            </div>
+          </div>
+          <strong>£11.99</strong>
+        </a>
+      </section>
+
+      <section class="section tx-day-group" style="padding-bottom: calc(var(--nav-height) + 18px);">
+        <h3>21 Feb 2026</h3>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=primark" data-category="shopping">
+          <div class="tx-item-left">
+            <div class="tx-icon">🛍️</div>
+            <div>
+              <strong>Primark</strong>
+              <small>Shopping</small>
+            </div>
+          </div>
+          <strong>£23.60</strong>
+        </a>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=dominos" data-category="food">
+          <div class="tx-item-left">
+            <div class="tx-icon">🍕</div>
+            <div>
+              <strong>Domino's</strong>
+              <small>Food</small>
+            </div>
+          </div>
+          <strong>£14.75</strong>
+        </a>
+      </section>
+
+      <section class="section tx-day-group">
+        <h3>20 Feb 2026</h3>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=sainsburys" data-category="shopping groceries">
+          <div class="tx-item-left">
+            <div class="tx-icon">🛒</div>
+            <div>
+              <strong>Sainsbury's</strong>
+              <small>Groceries</small>
+            </div>
+          </div>
+          <strong>£44.77</strong>
+        </a>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=starbucks" data-category="food drinks">
+          <div class="tx-item-left">
+            <div class="tx-icon">🥤</div>
+            <div>
+              <strong>Starbucks</strong>
+              <small>Coffee</small>
+            </div>
+          </div>
+          <strong>£5.35</strong>
+        </a>
+        <a class="tx-item tx-link-card" href="TransactionDetailPage.html?tx=trainline" data-category="transport">
+          <div class="tx-item-left">
+            <div class="tx-icon">🚆</div>
+            <div>
+              <strong>Trainline</strong>
+              <small>Train ticket</small>
+            </div>
+          </div>
+          <strong>£18.40</strong>
+        </a>
+      </section>
+
+      <section class="section tx-no-results" id="txNoResults" hidden>
+        No transactions match your search.
+      </section>
+    </div>
+
+    <nav class="bottom-nav">
+      <a class="nav-item active" href="HomePage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <path d="M3 10.5l9-7 9 7" />
+          <path d="M5 9.5V20h14V9.5" />
+        </svg>
+        <span>HOME</span>
+      </a>
+      <a class="nav-item" href="TrendsPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4v8h8" />
+          <path d="M12 12l5.5 5.5" />
+        </svg>
+        <span>BUDGET</span>
+      </a>
+      <a class="nav-item social-tab" href="SocialPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="8" r="2.8" />
+          <circle cx="15.8" cy="8.4" r="2.4" />
+          <path d="M3.8 18.7c0-2.6 2.1-4.7 4.7-4.7h5.2c2.6 0 4.7 2.1 4.7 4.7 0 .8-.6 1.5-1.4 1.5H5.2c-.8 0-1.4-.7-1.4-1.5z" />
+        </svg>
+        <span>SOCIAL</span>
+      </a>
+      <a class="nav-item challenges-tab" href="ChallengesPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 5h8v3.6a4 4 0 0 1-8 0V5z" />
+          <path d="M8 7H6.5a2.5 2.5 0 0 0 0 5H8" />
+          <path d="M16 7h1.5a2.5 2.5 0 0 1 0 5H16" />
+          <path d="M12 12.6V16" />
+          <path d="M9.4 19h5.2" />
+        </svg>
+        <span>CHALLENGES</span>
+      </a>
+    </nav>
+
+    <script>
+      (function () {
+        var TRANSACTIONS_KEY = 'lloydbeTransactionsV1';
+        var dynamicTxList = document.getElementById('dynamicTxList');
+        var searchInput = document.getElementById('txSearchInput');
+        var groups = Array.from(document.querySelectorAll('.tx-day-group'));
+        var noResults = document.getElementById('txNoResults');
+        var filterButtons = Array.from(document.querySelectorAll('.tx-chip-btn'));
+        var activeFilter = 'all';
+
+        function formatMoney(value) {
+          var amount = Number(value);
+          if (!Number.isFinite(amount)) {
+            amount = 0;
+          }
+          return '£' + amount.toFixed(2);
+        }
+
+        function loadDynamicTransactions() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function renderDynamicTransactions() {
+          if (!dynamicTxList) {
+            return;
+          }
+
+          var items = loadDynamicTransactions();
+          dynamicTxList.innerHTML = '';
+
+          items.slice(0, 25).forEach(function (tx) {
+            var link = document.createElement('a');
+            link.className = 'tx-item tx-link-card';
+            link.href = 'TransactionDetailPage.html?tx=' + encodeURIComponent(String(tx.id || ''));
+            link.dataset.category = String(tx.category || 'transfer');
+
+            var left = document.createElement('div');
+            left.className = 'tx-item-left';
+
+            var icon = document.createElement('div');
+            icon.className = 'tx-icon';
+            icon.textContent = tx.icon || '💸';
+
+            var textWrap = document.createElement('div');
+            var title = document.createElement('strong');
+            title.textContent = tx.name || 'Transfer';
+            var subtitle = document.createElement('small');
+            subtitle.textContent = tx.direction === 'in' ? 'Received money' : 'Sent money';
+            textWrap.appendChild(title);
+            textWrap.appendChild(subtitle);
+
+            left.appendChild(icon);
+            left.appendChild(textWrap);
+
+            var amount = document.createElement('strong');
+            var raw = Number(tx.amount);
+            var isIncoming = tx.direction === 'in';
+            amount.textContent = (isIncoming ? '+' : '-') + formatMoney(Math.abs(Number.isFinite(raw) ? raw : 0));
+            amount.style.color = isIncoming ? '#24a46d' : '#d45b5b';
+
+            link.appendChild(left);
+            link.appendChild(amount);
+            dynamicTxList.appendChild(link);
+          });
+
+          var dynamicGroup = dynamicTxList.closest('.tx-day-group');
+          if (dynamicGroup) {
+            dynamicGroup.hidden = items.length === 0;
+          }
+        }
+
+        function matchesCategory(item, category) {
+          if (category === 'all') {
+            return true;
+          }
+          var categories = (item.dataset.category || '').split(/\s+/);
+          return categories.indexOf(category) !== -1;
+        }
+
+        function filterTransactions() {
+          var query = (searchInput.value || '').trim().toLowerCase();
+          var hasAnyMatch = false;
+
+          groups.forEach(function (group) {
+            var dayLabel = (group.querySelector('h3')?.textContent || '').toLowerCase();
+            var items = Array.from(group.querySelectorAll('.tx-item'));
+            var groupHasVisibleItem = false;
+
+            items.forEach(function (item) {
+              var haystack = ((item.textContent || '') + ' ' + dayLabel).toLowerCase();
+              var matchesText = query === '' || haystack.indexOf(query) !== -1;
+              var matchesType = matchesCategory(item, activeFilter);
+              var isMatch = matchesText && matchesType;
+
+              item.hidden = !isMatch;
+              if (isMatch) {
+                groupHasVisibleItem = true;
+                hasAnyMatch = true;
+              }
+            });
+
+            group.hidden = !groupHasVisibleItem;
+          });
+
+          noResults.hidden = hasAnyMatch;
+        }
+
+        searchInput.addEventListener('input', filterTransactions);
+
+        filterButtons.forEach(function (button) {
+          button.addEventListener('click', function () {
+            activeFilter = button.dataset.filter;
+            filterButtons.forEach(function (chip) {
+              chip.classList.toggle('active', chip === button);
+            });
+            filterTransactions();
+          });
+        });
+
+        renderDynamicTransactions();
+        filterTransactions();
+      })();
+    </script>
+  </body>
+</html>

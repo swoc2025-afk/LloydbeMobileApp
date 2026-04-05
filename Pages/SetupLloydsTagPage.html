@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Setup - LloydsTag</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen auth-screen login-screen">
+      <div class="status-bar"><strong>9:41</strong><div class="status-icons"><span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="network-label">5G</span><span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span></div></div>
+      <div class="top-row"><a class="back-link" href="SetupFaceIdPage.html">◀ Back</a><div class="page-title">Account Setup</div><div style="width: 38px;"></div></div>
+      <main class="auth-main auth-main-login">
+        <div class="setup-steps">
+          <div class="setup-step done"><div class="setup-step-num">1</div><div class="setup-step-label">Notifications</div><div class="setup-step-line"></div></div>
+          <div class="setup-step done"><div class="setup-step-num">2</div><div class="setup-step-label">Face ID</div><div class="setup-step-line"></div></div>
+          <div class="setup-step active"><div class="setup-step-num">3</div><div class="setup-step-label">LloydsTag</div><div class="setup-step-line"></div></div>
+        </div>
+        <section class="setup-card">
+          <h2>Create your LloydsTag</h2>
+          <p>Your LloydsTag helps friends find you for payments.</p>
+          <div class="name-input-row" data-target="lloydsTagInput">
+            <div class="fixed-at-input">
+              <span class="fixed-at-prefix">@</span>
+              <input id="lloydsTagInput" class="auth-input" type="text" placeholder="LloydsTag (e.g. user_name)" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            </div>
+          </div>
+          <div id="tagStatus" class="login-status" role="status" aria-live="polite"></div>
+        </section>
+      </main>
+      <div class="setup-actions setup-actions-single">
+        <button id="tagSave" class="auth-btn" type="button">Continue</button>
+        <button id="tagSkip" class="setup-not-now" type="button">Not now</button>
+      </div>
+    </div>
+    <script>
+      (function(){
+        var PREF_KEY='lloydbeSetupPrefsV1';
+        var TAG_KEY='lloydbeLloydsTagV1';
+        var REGISTRY_KEY='lloydbeTagRegistryV1';
+        var CURRENT_USER_KEY='lloydbeCurrentUserV1';
+        var CRED_KEY='lloydbeAuthCredentialV1';
+
+        var input=document.getElementById('lloydsTagInput');
+        var status=document.getElementById('tagStatus');
+        var row=document.querySelector('.name-input-row');
+
+        if(row){row.addEventListener('click',function(){input.focus();});}
+
+        function setStatus(m,e){
+          status.textContent=m||'';
+          status.classList.toggle('error',!!e);
+        }
+
+        function savePrefs(v){
+          var o={};
+          try{o=JSON.parse(localStorage.getItem(PREF_KEY)||'{}')||{};}catch(err){}
+          Object.assign(o,v);
+          localStorage.setItem(PREF_KEY,JSON.stringify(o));
+        }
+
+        function readJSON(key, fallback){
+          try {
+            var parsed = JSON.parse(localStorage.getItem(key) || '');
+            return parsed && typeof parsed === 'object' ? parsed : fallback;
+          } catch (error) {
+            return fallback;
+          }
+        }
+
+        function writeJSON(key, value){
+          localStorage.setItem(key, JSON.stringify(value));
+        }
+
+        function getOwnerId(){
+          var currentUser = String(localStorage.getItem(CURRENT_USER_KEY) || '').trim();
+          if (currentUser) {
+            return currentUser;
+          }
+          var credential = readJSON(CRED_KEY, {});
+          return String(credential.username || '').trim() || 'unknown_user';
+        }
+
+        function normalizeTag(value){
+          return String(value || '').trim().replace(/^@+/, '').toLowerCase();
+        }
+
+        function claimTag(rawTag){
+          var ownerId = getOwnerId();
+          var currentTagRaw = String(localStorage.getItem(TAG_KEY) || '').trim();
+          var currentTag = normalizeTag(currentTagRaw);
+          var wantedTag = normalizeTag(rawTag);
+          var registry = readJSON(REGISTRY_KEY, {});
+
+          if (!wantedTag) {
+            return { ok: false, reason: 'invalid' };
+          }
+
+          var existingOwner = String(registry[wantedTag] || '');
+          if (existingOwner && existingOwner !== ownerId) {
+            return { ok: false, reason: 'taken' };
+          }
+
+          if (currentTag && registry[currentTag] === ownerId && currentTag !== wantedTag) {
+            delete registry[currentTag];
+          }
+
+          registry[wantedTag] = ownerId;
+          writeJSON(REGISTRY_KEY, registry);
+          localStorage.setItem(TAG_KEY, rawTag.replace(/^@+/, ''));
+          return { ok: true };
+        }
+
+        function clearCurrentUsersTag() {
+          var ownerId = getOwnerId();
+          var currentTagRaw = String(localStorage.getItem(TAG_KEY) || '').trim();
+          var currentTag = normalizeTag(currentTagRaw);
+          var registry = readJSON(REGISTRY_KEY, {});
+
+          if (currentTag && registry[currentTag] === ownerId) {
+            delete registry[currentTag];
+            writeJSON(REGISTRY_KEY, registry);
+          }
+
+          localStorage.removeItem(TAG_KEY);
+        }
+
+        document.getElementById('tagSkip').addEventListener('click',function(){
+          clearCurrentUsersTag();
+          savePrefs({lloydsTagSkipped:true});
+          window.location.href='SetupCompletePage.html';
+        });
+
+        document.getElementById('tagSave').addEventListener('click',function(){
+          var tag=String(input.value||'').trim();
+          if(!/^[a-zA-Z0-9_.-]{3,24}$/.test(tag)){
+            setStatus('Use 3-24 characters (letters, numbers, ., _, -).',true);
+            return;
+          }
+
+          var result = claimTag(tag);
+          if (!result.ok && result.reason === 'taken') {
+            setStatus('Pick another name, this one is already being used.', true);
+            return;
+          }
+
+          savePrefs({lloydsTagSkipped:false});
+          setStatus('',false);
+          window.location.href='SetupCompletePage.html';
+        });
+      })();
+    </script>
+  </body>
+</html>

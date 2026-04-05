@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Budget</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen budget-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="budget-top">
+        <h1>BUDGET</h1>
+      </div>
+
+      <section class="section budget-section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <div class="budget-heading-row">
+          <h2>Spending</h2>
+          <a class="budget-edit-btn" href="AddBudgetCategoryPage.html" aria-label="Add budget category">+ Add category</a>
+        </div>
+
+        <div class="budget-view-toggle" role="tablist" aria-label="Budget view">
+          <button type="button" class="budget-view-btn active" data-view="categories" role="tab" aria-selected="true">Categories</button>
+          <button type="button" class="budget-view-btn" data-view="overview" role="tab" aria-selected="false">Overview</button>
+        </div>
+
+        <div class="budget-remaining-box" aria-live="polite">
+          <div class="budget-remaining-label">Monthly budget overview</div>
+          <div class="budget-total"><strong id="budgetRemainingAmount">£3,200</strong> remaining</div>
+          <div class="budget-summary-grid">
+            <div><small>Spent</small><strong id="budgetSpentAmount">£800</strong></div>
+            <div><small>Total</small><strong id="budgetTotalAmount">£4,000</strong></div>
+            <div><small>Used</small><strong id="budgetUsedPercent">20%</strong></div>
+          </div>
+          <div id="budgetOverviewPercentLabel" class="budget-progress-percent">20%</div>
+          <div class="progress budget-overview-progress"><span id="budgetOverviewFill" style="width: 20%; background:#8f6be8;"></span></div>
+        </div>
+
+        <div id="budgetMonthNav" class="budget-month-nav" aria-label="Month switcher">
+          <button id="budgetPrevMonth" type="button" class="budget-month-arrow" aria-label="Previous month">◀</button>
+          <div class="budget-month-current">
+            <strong id="budgetMonthLabel">June 2026</strong>
+          </div>
+          <button id="budgetNextMonth" type="button" class="budget-month-arrow" aria-label="Next month">▶</button>
+        </div>
+
+        <div id="budgetCategoriesView" class="budget-categories-view">
+          <a class="budget-card budget-category-link" href="BudgetCategoryDetailPage.html?category=phone">
+            <div class="budget-card-head">
+              <div class="budget-cat-icon" style="background:#b7e3b2;">📱</div>
+              <div class="budget-cat-meta">
+                <strong>Phone Bill</strong>
+              </div>
+              <div class="budget-cat-amt">£0<br /><small>/ £10</small></div>
+            </div>
+            <div class="budget-progress-head"><small class="budget-progress-percent">0%</small></div>
+            <div class="progress budget-progress"><span style="width: 0%; background:#cdcdcf;"></span></div>
+            <div class="budget-foot"><span>Spent: £0</span><span>Upcoming: £10</span></div>
+          </a>
+
+          <a class="budget-card budget-category-link" href="BudgetCategoryDetailPage.html?category=health">
+            <div class="budget-card-head">
+              <div class="budget-cat-icon" style="background:#1ec389;">💗</div>
+              <div class="budget-cat-meta">
+                <strong>Health</strong>
+              </div>
+              <div class="budget-cat-amt">£9.50<br /><small>/ £20</small></div>
+            </div>
+            <div class="budget-progress-head"><small class="budget-progress-percent">52%</small></div>
+            <div class="progress budget-progress"><span style="width: 52%; background:#efb0ab;"></span></div>
+            <div class="budget-foot"><span>Spent: £10.50</span><span>Done</span></div>
+          </a>
+
+          <a class="budget-card budget-category-link" href="BudgetCategoryDetailPage.html?category=fun">
+            <div class="budget-card-head">
+              <div class="budget-cat-icon" style="background:#0b6f4d;">🎬</div>
+              <div class="budget-cat-meta">
+                <strong>Fun</strong>
+              </div>
+              <div class="budget-cat-amt">£19.01<br /><small>/ £50</small></div>
+            </div>
+            <div class="budget-progress-head"><small class="budget-progress-percent">60%</small></div>
+            <div class="progress budget-progress"><span style="width: 60%; background:#98c8ee;"></span></div>
+            <div class="budget-foot"><span>Spent: £0</span><span>Upcoming: £30.99</span></div>
+          </a>
+          <div id="budgetCustomCategories"></div>
+        </div>
+
+        <div id="budgetOverviewView" hidden>
+          <div class="budget-card">
+            <div class="budget-heading-row" style="margin-bottom: 8px;">
+              <h2 style="font-size: 15px;">Spending breakdown</h2>
+            </div>
+            <div class="budget-overview-layout">
+              <div id="budgetPieChart" class="budget-pie-chart" aria-label="Spending pie chart"></div>
+              <div id="budgetPieLegend" class="budget-pie-legend"></div>
+            </div>
+          </div>
+          <div class="budget-card">
+            <div class="budget-insight-list">
+              <div class="budget-insight-item"><strong>Biggest category this month:</strong> <span id="budgetBiggestCategory">Fun (£30.00)</span></div>
+              <div class="budget-insight-item"><strong>Daily average spend:</strong> <span id="budgetDailyAverage">£1.20/day</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <nav class="bottom-nav">
+      <a class="nav-item" href="HomePage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <path d="M3 10.5l9-7 9 7" />
+          <path d="M5 9.5V20h14V9.5" />
+        </svg>
+        <span>HOME</span>
+      </a>
+      <a class="nav-item active" href="TrendsPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4v8h8" />
+          <path d="M12 12l5.5 5.5" />
+        </svg>
+        <span>BUDGET</span>
+      </a>
+      <a class="nav-item social-tab" href="SocialPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="8" r="2.8" />
+          <circle cx="15.8" cy="8.4" r="2.4" />
+          <path d="M3.8 18.7c0-2.6 2.1-4.7 4.7-4.7h5.2c2.6 0 4.7 2.1 4.7 4.7 0 .8-.6 1.5-1.4 1.5H5.2c-.8 0-1.4-.7-1.4-1.5z" />
+        </svg>
+        <span>SOCIAL</span>
+      </a>
+      <a class="nav-item challenges-tab" href="ChallengesPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 5h8v3.6a4 4 0 0 1-8 0V5z" />
+          <path d="M8 7H6.5a2.5 2.5 0 0 0 0 5H8" />
+          <path d="M16 7h1.5a2.5 2.5 0 0 1 0 5H16" />
+          <path d="M12 12.6V16" />
+          <path d="M9.4 19h5.2" />
+        </svg>
+        <span>CHALLENGES</span>
+      </a>
+    </nav>
+
+    <script>
+      (function () {
+        var CUSTOM_CATEGORIES_KEY = 'lloydbeBudgetCategoriesV1';
+        var TRANSACTIONS_KEY = 'lloydbeTransactionsV1';
+        var LIMITS_KEY = 'lloydbeBudgetCategoryLimitsV1';
+        var DELETED_CATEGORIES_KEY = 'lloydbeBudgetDeletedCategoriesV1';
+        var data = (function buildMonths() {
+          var items = [];
+          var now = new Date();
+          for (var i = -2; i <= 2; i += 1) {
+            var d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+            items.push({
+              year: d.getFullYear(),
+              month: d.getMonth(),
+              label: d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
+              total: 4000
+            });
+          }
+          return items;
+        })();
+
+        var monthLabel = document.getElementById('budgetMonthLabel');
+        var remainingAmount = document.getElementById('budgetRemainingAmount');
+        var spentAmount = document.getElementById('budgetSpentAmount');
+        var totalAmount = document.getElementById('budgetTotalAmount');
+        var usedPercent = document.getElementById('budgetUsedPercent');
+        var overviewPercentLabel = document.getElementById('budgetOverviewPercentLabel');
+        var overviewFill = document.getElementById('budgetOverviewFill');
+        var monthNav = document.getElementById('budgetMonthNav');
+        var monthCurrent = monthNav ? monthNav.querySelector('.budget-month-current') : null;
+        var categoriesView = document.getElementById('budgetCategoriesView');
+        var customCategoriesWrap = document.getElementById('budgetCustomCategories');
+        var overviewView = document.getElementById('budgetOverviewView');
+        var viewButtons = Array.from(document.querySelectorAll('.budget-view-btn'));
+        var pieChart = document.getElementById('budgetPieChart');
+        var pieLegend = document.getElementById('budgetPieLegend');
+        var biggestCategory = document.getElementById('budgetBiggestCategory');
+        var dailyAverage = document.getElementById('budgetDailyAverage');
+        var prevBtn = document.getElementById('budgetPrevMonth');
+        var nextBtn = document.getElementById('budgetNextMonth');
+
+        if (!monthLabel || !remainingAmount || !spentAmount || !totalAmount || !usedPercent || !overviewPercentLabel || !overviewFill || !monthNav || !monthCurrent || !prevBtn || !nextBtn) {
+          return;
+        }
+
+        var index = 2;
+        var touchStartX = 0;
+        var touchStartY = 0;
+        var activeView = 'categories';
+        var fallbackByMonthIndex = {
+          0: { spent: 640, categories: { phone: 8, health: 7, fun: 22 } },
+          1: { spent: 670, categories: { phone: 9, health: 9, fun: 26 } },
+          2: { spent: 800, categories: { phone: 0, health: 10.5, fun: 30 } },
+          3: { spent: 880, categories: { phone: 10, health: 13, fun: 36 } },
+          4: { spent: 820, categories: { phone: 9, health: 11, fun: 28 } }
+        };
+
+        function formatMoney(value) {
+          var amount = Number(value);
+          if (!Number.isFinite(amount)) {
+            amount = 0;
+          }
+          return '£' + amount.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function formatMoney2(value) {
+          var amount = Number(value);
+          if (!Number.isFinite(amount)) {
+            amount = 0;
+          }
+          return '£' + amount.toFixed(2);
+        }
+
+        function progressColor(percent) {
+          if (percent < 50) {
+            return '#2db56f';
+          }
+          if (percent <= 80) {
+            return '#f0a34a';
+          }
+          return '#dd5b5b';
+        }
+
+        function updateCategoryProgressColors() {
+          var bars = Array.from(document.querySelectorAll('.budget-progress span'));
+          bars.forEach(function (bar) {
+            var raw = String(bar.style.width || '').replace('%', '');
+            var pct = Number(raw);
+            if (!Number.isFinite(pct)) {
+              pct = 0;
+            }
+            bar.style.background = progressColor(pct);
+            var head = bar.parentElement ? bar.parentElement.previousElementSibling : null;
+            var label = head ? head.querySelector('.budget-progress-percent') : null;
+            if (label) {
+              label.textContent = Math.round(pct) + '%';
+            }
+          });
+        }
+
+        function setView(view) {
+          var categoriesEl = document.getElementById('budgetCategoriesView');
+          var overviewEl = document.getElementById('budgetOverviewView');
+          if (!categoriesEl || !overviewEl) {
+            return;
+          }
+          activeView = view === 'overview' ? 'overview' : 'categories';
+          categoriesEl.hidden = activeView !== 'categories';
+          overviewEl.hidden = activeView !== 'overview';
+          categoriesEl.style.display = activeView === 'categories' ? 'grid' : 'none';
+          overviewEl.style.display = activeView === 'overview' ? 'grid' : 'none';
+          viewButtons.forEach(function (btn) {
+            var isActive = btn.getAttribute('data-view') === activeView;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          });
+        }
+
+        function loadCustomCategories() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(CUSTOM_CATEGORIES_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function loadTransactions() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function loadBudgetLimits() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(LIMITS_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+          } catch (error) {
+            return {};
+          }
+        }
+
+        function loadDeletedCategories() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(DELETED_CATEGORIES_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed.map(function (item) { return String(item || '').toLowerCase(); }) : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function renderCustomCategoryCards() {
+          if (!customCategoriesWrap) {
+            return;
+          }
+          var categories = loadCustomCategories();
+          var month = computeMonthData(data[index], index);
+          var customTotals = month.customCategories || {};
+          customCategoriesWrap.innerHTML = '';
+          categories.forEach(function (cat) {
+            var spent = Number(customTotals[String(cat.id || '')]) || 0;
+            var limit = Number(cat.limit) || 0;
+            var remaining = Math.max(0, limit - spent);
+            var pct = limit > 0 ? Math.min(100, Math.round((spent / limit) * 100)) : 0;
+
+            var link = document.createElement('a');
+            link.className = 'budget-card budget-category-link';
+            link.href = 'BudgetCategoryDetailPage.html?category=' + encodeURIComponent(String(cat.id || ''));
+
+            link.innerHTML =
+              '<div class="budget-card-head">' +
+                '<div class="budget-cat-icon" style="background:' + String(cat.color || '#ece7df') + ';">' + String(cat.emoji || '🧩') + '</div>' +
+                '<div class="budget-cat-meta"><strong>' + String(cat.name || 'Custom category') + '</strong></div>' +
+                '<div class="budget-cat-amt">' + formatMoney2(spent) + '<br /><small>/ ' + formatMoney2(limit).replace('.00', '') + '</small></div>' +
+              '</div>' +
+              '<div class="budget-progress-head"><small class="budget-progress-percent">' + pct + '%</small></div>' +
+              '<div class="progress budget-progress"><span style="width:' + pct + '%; background:' + progressColor(pct) + ';"></span></div>' +
+              '<div class="budget-foot"><span>Spent: ' + formatMoney2(spent) + '</span><span>' + (remaining > 0 ? ('Remaining: ' + formatMoney2(remaining)) : 'Limit reached') + '</span></div>';
+
+            customCategoriesWrap.appendChild(link);
+          });
+        }
+
+        function matchesTag(haystack, tags) {
+          return tags.some(function (tag) {
+            return haystack.indexOf(String(tag || '').toLowerCase()) !== -1;
+          });
+        }
+
+        function computeMonthData(baseMonth, arrayIndex) {
+          var txs = loadTransactions();
+          var custom = loadCustomCategories();
+          var totals = {
+            phone: 0,
+            health: 0,
+            fun: 0
+          };
+          var customTotals = {};
+          custom.forEach(function (cat) {
+            customTotals[String(cat.id || '')] = 0;
+          });
+
+          var outgoingSpent = 0;
+          txs.forEach(function (tx) {
+            var d = new Date(tx.createdAt || tx.date || '');
+            if (Number.isNaN(d.getTime())) {
+              return;
+            }
+            if (d.getFullYear() !== baseMonth.year || d.getMonth() !== baseMonth.month) {
+              return;
+            }
+            if (tx.direction === 'in') {
+              return;
+            }
+            var amount = Math.abs(Number(tx.amount) || 0);
+            if (!Number.isFinite(amount) || amount <= 0) {
+              return;
+            }
+
+            outgoingSpent += amount;
+            var haystack = (String(tx.category || '') + ' ' + String(tx.name || '')).toLowerCase();
+
+            if (matchesTag(haystack, ['phone', 'bill', 'mobile', 'o2'])) {
+              totals.phone += amount;
+              return;
+            }
+            if (matchesTag(haystack, ['health', 'pharmacy', 'medical', 'boots', 'lloyds'])) {
+              totals.health += amount;
+              return;
+            }
+            if (matchesTag(haystack, ['fun', 'entertainment', 'cinema', 'odeon', 'arcade'])) {
+              totals.fun += amount;
+              return;
+            }
+            custom.forEach(function (cat) {
+              var tags = Array.isArray(cat.tags) ? cat.tags : [];
+              var fallbackTag = String(cat.name || '').toLowerCase();
+              var matchTags = tags.length ? tags : [fallbackTag];
+              if (matchesTag(haystack, matchTags)) {
+                customTotals[String(cat.id || '')] += amount;
+              }
+            });
+          });
+
+          var fallback = fallbackByMonthIndex[arrayIndex] || { spent: 0, categories: { phone: 0, health: 0, fun: 0 } };
+          if (outgoingSpent <= 0) {
+            outgoingSpent = Number(fallback.spent) || 0;
+            totals.phone = Number(fallback.categories.phone) || 0;
+            totals.health = Number(fallback.categories.health) || 0;
+            totals.fun = Number(fallback.categories.fun) || 0;
+          }
+
+          return {
+            label: baseMonth.label,
+            total: baseMonth.total,
+            spent: Math.round(outgoingSpent * 100) / 100,
+            categories: {
+              phone: Math.round(totals.phone * 100) / 100,
+              health: Math.round(totals.health * 100) / 100,
+              fun: Math.round(totals.fun * 100) / 100
+            },
+            customCategories: customTotals
+          };
+        }
+
+        function renderBuiltInCategoryCards(month) {
+          var limits = loadBudgetLimits();
+          var deleted = loadDeletedCategories();
+          var definitions = [
+            { key: 'phone', href: 'BudgetCategoryDetailPage.html?category=phone' },
+            { key: 'health', href: 'BudgetCategoryDetailPage.html?category=health' },
+            { key: 'fun', href: 'BudgetCategoryDetailPage.html?category=fun' }
+          ];
+
+          definitions.forEach(function (def) {
+            var card = categoriesView ? categoriesView.querySelector('a[href="' + def.href + '"]') : null;
+            if (!card) {
+              return;
+            }
+            var isDeleted = deleted.indexOf(String(def.key || '').toLowerCase()) !== -1;
+            card.style.display = isDeleted ? 'none' : '';
+            if (isDeleted) {
+              return;
+            }
+            var spent = Number((month.categories || {})[def.key]) || 0;
+            var fallbackLimit = def.key === 'phone' ? 10 : (def.key === 'health' ? 20 : 50);
+            var limit = Number(limits[def.key]);
+            if (!Number.isFinite(limit) || limit <= 0) {
+              limit = fallbackLimit;
+            }
+            var remaining = Math.max(0, limit - spent);
+            var pct = limit > 0 ? Math.min(100, Math.round((spent / limit) * 100)) : 0;
+
+            var amtEl = card.querySelector('.budget-cat-amt');
+            var pctEl = card.querySelector('.budget-progress-percent');
+            var barEl = card.querySelector('.budget-progress span');
+            var footEls = card.querySelectorAll('.budget-foot span');
+
+            if (amtEl) {
+              amtEl.innerHTML = formatMoney2(spent) + '<br /><small>/ ' + formatMoney2(limit).replace('.00', '') + '</small>';
+            }
+            if (pctEl) {
+              pctEl.textContent = pct + '%';
+            }
+            if (barEl) {
+              barEl.style.width = pct + '%';
+              barEl.style.background = progressColor(pct);
+            }
+            if (footEls[0]) {
+              footEls[0].textContent = 'Spent: ' + formatMoney2(spent);
+            }
+            if (footEls[1]) {
+              footEls[1].textContent = remaining > 0 ? ('Remaining: ' + formatMoney2(remaining)) : 'Limit reached';
+            }
+          });
+        }
+
+        function renderOverview(month) {
+          if (!pieChart || !pieLegend || !biggestCategory || !dailyAverage) {
+            return;
+          }
+          var deleted = loadDeletedCategories();
+          var cats = month.categories || {};
+          var entries = [
+            { key: 'phone', name: 'Phone Bill', value: Number(cats.phone) || 0, color: '#b7e3b2' },
+            { key: 'health', name: 'Health', value: Number(cats.health) || 0, color: '#1ec389' },
+            { key: 'fun', name: 'Fun', value: Number(cats.fun) || 0, color: '#0b6f4d' }
+          ].filter(function (entry) {
+            return deleted.indexOf(String(entry.key || '').toLowerCase()) === -1;
+          }).map(function (entry) {
+            return {
+              name: entry.name,
+              value: entry.value,
+              color: entry.color
+            };
+          });
+          loadCustomCategories().forEach(function (cat) {
+            entries.push({
+              name: String(cat.name || 'Custom'),
+              value: Number((month.customCategories || {})[String(cat.id || '')]) || 0,
+              color: String(cat.color || '#ece7df')
+            });
+          });
+          var total = entries.reduce(function (sum, item) { return sum + item.value; }, 0);
+          var biggest = entries.slice().sort(function (a, b) { return b.value - a.value; })[0];
+          var day = new Date().getDate();
+          var daily = day > 0 ? (Number(month.spent) || 0) / day : 0;
+
+          biggestCategory.textContent = biggest.name + ' (' + formatMoney(biggest.value) + ')';
+          dailyAverage.textContent = formatMoney(daily) + '/day';
+
+          if (total <= 0) {
+            pieChart.style.background = '#ece7df';
+            pieLegend.innerHTML = '<div class="budget-legend-item"><span class="dot" style="background:#ece7df;"></span>No category spend yet</div>';
+            return;
+          }
+
+          var start = 0;
+          var parts = entries.map(function (entry) {
+            var pct = (entry.value / total) * 100;
+            var end = start + pct;
+            var part = entry.color + ' ' + start + '% ' + end + '%';
+            start = end;
+            return part;
+          });
+          pieChart.style.background = 'conic-gradient(' + parts.join(',') + ')';
+          pieLegend.innerHTML = '';
+          entries.forEach(function (entry) {
+            var row = document.createElement('div');
+            row.className = 'budget-legend-item';
+            var pct = total > 0 ? Math.round((entry.value / total) * 100) : 0;
+            row.innerHTML = '<span class="dot" style="background:' + entry.color + ';"></span>' + entry.name + ' · ' + pct + '%';
+            pieLegend.appendChild(row);
+          });
+        }
+
+        function renderMonth() {
+          var month = computeMonthData(data[index], index);
+          var total = Number(month.total) || 0;
+          var spent = Math.max(0, Number(month.spent) || 0);
+          var remaining = Math.max(0, total - spent);
+          var percent = total > 0 ? Math.min(100, Math.round((spent / total) * 100)) : 0;
+
+          monthLabel.textContent = month.label;
+          remainingAmount.textContent = formatMoney(remaining);
+          spentAmount.textContent = formatMoney(spent);
+          totalAmount.textContent = formatMoney(total);
+          usedPercent.textContent = percent + '%';
+          overviewPercentLabel.textContent = percent + '%';
+          overviewFill.style.width = percent + '%';
+          overviewFill.style.background = progressColor(percent);
+          renderBuiltInCategoryCards(month);
+          renderCustomCategoryCards();
+          renderOverview(month);
+        }
+
+        function animateMonthChange(direction) {
+          monthCurrent.classList.remove('slide-left', 'slide-right');
+          void monthCurrent.offsetWidth;
+          monthCurrent.classList.add(direction === 'left' ? 'slide-left' : 'slide-right');
+        }
+
+        function changeMonth(step, direction) {
+          index = (index + step + data.length) % data.length;
+          renderMonth();
+          animateMonthChange(direction);
+        }
+
+        prevBtn.addEventListener('click', function () {
+          changeMonth(-1, 'right');
+        });
+
+        nextBtn.addEventListener('click', function () {
+          changeMonth(1, 'left');
+        });
+
+        monthCurrent.addEventListener('animationend', function () {
+          monthCurrent.classList.remove('slide-left', 'slide-right');
+        });
+
+        monthNav.addEventListener('touchstart', function (event) {
+          if (!event.touches || !event.touches[0]) {
+            return;
+          }
+          touchStartX = event.touches[0].clientX;
+          touchStartY = event.touches[0].clientY;
+        }, { passive: true });
+
+        monthNav.addEventListener('touchend', function (event) {
+          if (!event.changedTouches || !event.changedTouches[0]) {
+            return;
+          }
+          var dx = event.changedTouches[0].clientX - touchStartX;
+          var dy = event.changedTouches[0].clientY - touchStartY;
+          if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) {
+            return;
+          }
+          if (dx < 0) {
+            changeMonth(1, 'left');
+          } else {
+            changeMonth(-1, 'right');
+          }
+        }, { passive: true });
+
+        updateCategoryProgressColors();
+        document.addEventListener('click', function (event) {
+          var btn = event.target && event.target.closest ? event.target.closest('.budget-view-btn') : null;
+          if (!btn) {
+            return;
+          }
+          event.preventDefault();
+          setView(btn.getAttribute('data-view'));
+        });
+        setView('categories');
+        renderMonth();
+      })();
+    </script>
+  </body>
+</html>

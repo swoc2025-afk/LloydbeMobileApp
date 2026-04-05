@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pot Details</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen pot-detail-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a id="potBackLink" class="back-link" href="PotsPage.html">◀ Back</a>
+        <div class="page-title">Pot Details</div>
+        <button id="editPotBtn" class="pot-edit-btn" type="button">Edit</button>
+      </div>
+
+      <section class="section" style="padding-bottom: calc(var(--nav-height) + 14px);">
+        <article id="potHero" class="pot-detail-hero">
+          <div id="potIconView" class="pot-detail-icon">💰</div>
+          <h2 id="potNameView">Pot</h2>
+          <input id="potNameInlineInput" class="input pot-inline-input" type="text" hidden />
+          <p id="potGoalView">£0.00 goal</p>
+          <div class="pot-hero-progress-wrap">
+            <div class="pot-hero-progress-head">
+              <span id="potSavedOfGoalView">£0.00 of £0.00 goal</span>
+              <strong id="potProgressPercentView">0%</strong>
+            </div>
+            <div class="pot-hero-progress">
+              <span id="potProgressFill"></span>
+            </div>
+          </div>
+          <div id="potGoalInlineWrap" class="pot-goal-inline" hidden>
+            <span>£</span>
+            <input id="potGoalInlineInput" class="input" type="number" min="0" step="10" />
+          </div>
+        </article>
+
+        <div id="potViewList" class="pot-detail-list">
+          <div class="budget-card" style="background: #ffffff;">
+            <div class="pot-detail-row"><span>Saved</span><strong id="potSavedView">£0.00</strong></div>
+            <div class="pot-detail-row"><span>Remaining to goal</span><strong id="potRemainingView">£0.00</strong></div>
+            <div class="pot-detail-row"><span>Deadline</span><strong id="potDeadlineView">Not set</strong></div>
+          </div>
+
+          <div class="budget-card" style="background: #ffffff;">
+            <div class="pot-detail-row"><span>Invite people</span><strong id="potInviteView">Off</strong></div>
+            <div class="pot-detail-row"><span>Auto-save</span><strong id="potAutosaveView">Off</strong></div>
+            <div class="pot-detail-row"><span>Reminders</span><strong id="potRemindersView">Off</strong></div>
+          </div>
+        </div>
+
+        <div id="potContributionsCard" class="budget-card" style="margin-top: 8px;" hidden>
+          <div class="budget-heading-row" style="margin-bottom: 6px;">
+            <h2 style="font-size: 15px;">Contributions</h2>
+          </div>
+          <div id="potContributionsList"></div>
+        </div>
+
+        <div id="potAddMoneyCard" class="budget-card" style="margin-top: 8px;">
+          <div class="budget-heading-row" style="margin-bottom: 6px;">
+            <h2 style="font-size: 15px;">Add money to pot</h2>
+          </div>
+          <div class="create-pot-form">
+            <label class="field-block" for="potAddAmountInput">
+              <span class="field-title">Amount (£)</span>
+              <input id="potAddAmountInput" class="input" type="number" min="0.01" step="0.01" placeholder="0.00" />
+            </label>
+            <button id="potAddAmountBtn" class="btn primary" type="button" style="margin-top: 8px;">Add money</button>
+            <small id="potAddAmountStatus" class="field-note" style="display:block; margin-top:6px;"></small>
+          </div>
+        </div>
+
+        <button id="deletePotInlineBtn" class="challenge-delete-btn" type="button" hidden style="width:100%; margin-top: 8px;">Delete Pot</button>
+
+        <form id="potEditForm" class="create-pot-form pot-edit-form" hidden>
+          <label class="field-block" for="editPotName">
+            <span class="field-title">Name</span>
+            <input id="editPotName" class="input" type="text" />
+          </label>
+
+          <label class="field-block" for="editPotIcon">
+            <span class="field-title">Pot icon</span>
+            <select id="editPotIcon" class="input">
+              <option value="✈️">✈️ Travel</option>
+              <option value="🎂">🎂 Birthday</option>
+              <option value="🎓">🎓 Education</option>
+              <option value="🚗">🚗 Car</option>
+              <option value="🏠">🏠 Home</option>
+              <option value="💍">💍 Wedding</option>
+              <option value="🛍️">🛍️ Shopping</option>
+              <option value="🧳">🧳 Trip</option>
+              <option value="💰">💰 Savings</option>
+            </select>
+          </label>
+
+          <label class="field-block" for="editPotGoal">
+            <span class="field-title">Goal</span>
+            <input id="editPotGoal" class="input" type="number" min="0" step="10" />
+          </label>
+
+          <label class="field-block" for="editPotColor">
+            <span class="field-title">Color</span>
+            <select id="editPotColor" class="input">
+              <option value="Forest">Forest</option>
+              <option value="Pine">Pine</option>
+              <option value="Sage">Sage</option>
+              <option value="Jade">Jade</option>
+              <option value="Meadow">Meadow</option>
+              <option value="Evergreen">Evergreen</option>
+            </select>
+          </label>
+
+          <label class="field-block" for="editPotDeadline">
+            <span class="field-title">Goal deadline</span>
+            <input id="editPotDeadline" class="input" type="date" />
+          </label>
+
+          <div class="toggle-row">
+            <span class="field-title" style="margin: 0;">Invite people</span>
+            <label class="switch-control" for="editInviteToggle">
+              <input id="editInviteToggle" type="checkbox" />
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div id="editInviteOptions" class="invite-options" hidden>
+            <label class="friend-pill"><input type="checkbox" value="Amy Miller" /><span>Amy Miller</span></label>
+            <label class="friend-pill"><input type="checkbox" value="John Doe" /><span>John Doe</span></label>
+            <label class="friend-pill"><input type="checkbox" value="Zoe Smith" /><span>Zoe Smith</span></label>
+            <label class="friend-pill"><input type="checkbox" value="Ben King" /><span>Ben King</span></label>
+            <label class="friend-pill"><input type="checkbox" value="Sarah Lee" /><span>Sarah Lee</span></label>
+          </div>
+
+          <div class="toggle-row">
+            <span class="field-title" style="margin: 0;">Auto-save</span>
+            <label class="switch-control" for="editAutosaveToggle">
+              <input id="editAutosaveToggle" type="checkbox" />
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div id="editAutosaveOptions" class="autosave-options" hidden>
+            <label><input type="radio" name="editAutosaveFrequency" value="Daily" /><span>Daily</span></label>
+            <label><input type="radio" name="editAutosaveFrequency" value="Weekly" /><span>Weekly</span></label>
+            <label><input type="radio" name="editAutosaveFrequency" value="Monthly" /><span>Monthly</span></label>
+          </div>
+
+          <div class="toggle-row">
+            <span class="field-title" style="margin: 0;">Reminders</span>
+            <label class="switch-control" for="editRemindersToggle">
+              <input id="editRemindersToggle" type="checkbox" />
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <button id="deletePotBtn" class="challenge-delete-btn" type="button" hidden>Delete Pot</button>
+        </form>
+
+        <div id="deletePotConfirm" class="confirm-overlay" hidden>
+          <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="deletePotTitle">
+            <h3 id="deletePotTitle">Delete this pot?</h3>
+            <p>Are you sure you want to delete this? It will be gone forever.</p>
+            <div class="confirm-actions">
+              <button id="cancelDeletePotBtn" class="btn btn-secondary" type="button">Cancel</button>
+              <button id="confirmDeletePotBtn" class="challenge-delete-btn" type="button">Delete</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <nav class="bottom-nav">
+      <a class="nav-item active" href="HomePage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <path d="M3 10.5l9-7 9 7" />
+          <path d="M5 9.5V20h14V9.5" />
+        </svg>
+        <span>HOME</span>
+      </a>
+      <a class="nav-item" href="TrendsPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4v8h8" />
+          <path d="M12 12l5.5 5.5" />
+        </svg>
+        <span>BUDGET</span>
+      </a>
+      <a class="nav-item social-tab" href="SocialPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="8" r="2.8" />
+          <circle cx="15.8" cy="8.4" r="2.4" />
+          <path d="M3.8 18.7c0-2.6 2.1-4.7 4.7-4.7h5.2c2.6 0 4.7 2.1 4.7 4.7 0 .8-.6 1.5-1.4 1.5H5.2c-.8 0-1.4-.7-1.4-1.5z" />
+        </svg>
+        <span>SOCIAL</span>
+      </a>
+      <a class="nav-item challenges-tab" href="ChallengesPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 5h8v3.6a4 4 0 0 1-8 0V5z" />
+          <path d="M8 7H6.5a2.5 2.5 0 0 0 0 5H8" />
+          <path d="M16 7h1.5a2.5 2.5 0 0 1 0 5H16" />
+          <path d="M12 12.6V16" />
+          <path d="M9.4 19h5.2" />
+        </svg>
+        <span>CHALLENGES</span>
+      </a>
+    </nav>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbePots';
+        var DEFAULT_OVERRIDE_KEY = 'lloydbeDefaultPotOverrides';
+        var ACCOUNT_BALANCE_KEY = 'lloydbeAccountBalanceV1';
+        var TRANSACTIONS_KEY = 'lloydbeTransactionsV1';
+        var INITIAL_ACCOUNT_BALANCE = 1000;
+
+        var defaultPots = {
+          holiday: {
+            name: 'Holiday',
+            icon: '✈️',
+            goal: 450,
+            currentAmount: 0,
+            color: 'Forest',
+            deadline: '',
+            inviteOn: false,
+            invitedFriends: [],
+            autosaveOn: false,
+            autosaveFrequency: '',
+            remindersOn: false
+          },
+          birthday: {
+            name: 'Birthday',
+            icon: '🎂',
+            goal: 120.5,
+            currentAmount: 0,
+            color: 'Sage',
+            deadline: '',
+            inviteOn: false,
+            invitedFriends: [],
+            autosaveOn: false,
+            autosaveFrequency: '',
+            remindersOn: false
+          }
+        };
+
+        var colorMap = {
+          Forest: 'var(--green-forest)',
+          Pine: 'var(--green-pine)',
+          Sage: 'var(--green-sage)',
+          Jade: 'var(--green-jade)',
+          Meadow: 'var(--green-meadow)',
+          Evergreen: 'var(--green-evergreen)',
+          Peach: 'var(--peach)',
+          Lavender: 'var(--lav)',
+          Mint: 'var(--mint)',
+          Sky: 'var(--blue)',
+          Sun: 'var(--sun)',
+          Lilac: 'var(--lilac)'
+        };
+
+        var editBtn = document.getElementById('editPotBtn');
+        var backLink = document.getElementById('potBackLink');
+        var editForm = document.getElementById('potEditForm');
+        var viewList = document.getElementById('potViewList');
+        var potNameView = document.getElementById('potNameView');
+        var potGoalView = document.getElementById('potGoalView');
+        var potNameInlineInput = document.getElementById('potNameInlineInput');
+        var potGoalInlineWrap = document.getElementById('potGoalInlineWrap');
+        var potGoalInlineInput = document.getElementById('potGoalInlineInput');
+        var potAddAmountInput = document.getElementById('potAddAmountInput');
+        var potAddAmountBtn = document.getElementById('potAddAmountBtn');
+        var potAddAmountStatus = document.getElementById('potAddAmountStatus');
+        var potSavedOfGoalView = document.getElementById('potSavedOfGoalView');
+        var potProgressPercentView = document.getElementById('potProgressPercentView');
+        var potProgressFill = document.getElementById('potProgressFill');
+        var potAddMoneyCard = document.getElementById('potAddMoneyCard');
+        var potContributionsCard = document.getElementById('potContributionsCard');
+        var potContributionsList = document.getElementById('potContributionsList');
+        var deletePotBtn = document.getElementById('deletePotInlineBtn') || document.getElementById('deletePotBtn');
+        var deletePotConfirm = document.getElementById('deletePotConfirm');
+        var cancelDeletePotBtn = document.getElementById('cancelDeletePotBtn');
+        var confirmDeletePotBtn = document.getElementById('confirmDeletePotBtn');
+
+        var editFields = {
+          name: document.getElementById('editPotName'),
+          icon: document.getElementById('editPotIcon'),
+          goal: document.getElementById('editPotGoal'),
+          color: document.getElementById('editPotColor'),
+          deadline: document.getElementById('editPotDeadline'),
+          inviteOn: document.getElementById('editInviteToggle'),
+          inviteOptions: document.getElementById('editInviteOptions'),
+          autosaveOn: document.getElementById('editAutosaveToggle'),
+          autosaveOptions: document.getElementById('editAutosaveOptions'),
+          remindersOn: document.getElementById('editRemindersToggle')
+        };
+
+        var currentPot = null;
+        var potContext = null;
+        var isEditMode = false;
+
+        function formatMoney(value) {
+          var amount = Number(value);
+          if (!Number.isFinite(amount)) {
+            amount = 0;
+          }
+          return '£' + amount.toFixed(2);
+        }
+
+        function formatDate(value) {
+          if (!value) {
+            return 'Not set';
+          }
+          var d = new Date(value);
+          if (Number.isNaN(d.getTime())) {
+            return 'Not set';
+          }
+          return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function roundMoney(value) {
+          return Math.round(Number(value) * 100) / 100;
+        }
+
+        function loadAccountBalance() {
+          var raw = Number(localStorage.getItem(ACCOUNT_BALANCE_KEY));
+          if (Number.isFinite(raw)) {
+            return raw;
+          }
+          localStorage.setItem(ACCOUNT_BALANCE_KEY, String(INITIAL_ACCOUNT_BALANCE));
+          return INITIAL_ACCOUNT_BALANCE;
+        }
+
+        function saveAccountBalance(value) {
+          localStorage.setItem(ACCOUNT_BALANCE_KEY, String(roundMoney(value)));
+        }
+
+        function loadPots() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function savePots(pots) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(pots));
+        }
+
+        function loadDefaultOverrides() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(DEFAULT_OVERRIDE_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+          } catch (error) {
+            return {};
+          }
+        }
+
+        function saveDefaultOverrides(data) {
+          localStorage.setItem(DEFAULT_OVERRIDE_KEY, JSON.stringify(data));
+        }
+
+        function loadTransactions() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveTransactions(items) {
+          localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(items));
+        }
+
+        function getAutosaveIntervalMs(frequency) {
+          var value = String(frequency || '').toLowerCase();
+          if (value === 'daily') {
+            return 24 * 60 * 60 * 1000;
+          }
+          if (value === 'weekly') {
+            return 7 * 24 * 60 * 60 * 1000;
+          }
+          if (value === 'monthly') {
+            return 30 * 24 * 60 * 60 * 1000;
+          }
+          return 0;
+        }
+
+        function processPotAutosaves() {
+          var pots = loadPots();
+          if (!pots.length) {
+            return;
+          }
+
+          var balance = loadAccountBalance();
+          var now = Date.now();
+          var potsChanged = false;
+          var balanceChanged = false;
+          var txChanged = false;
+          var txList = loadTransactions();
+          var txSeq = 0;
+
+          pots.forEach(function (pot) {
+            if (!pot || !pot.autosaveOn) {
+              return;
+            }
+            var amount = Number(pot.autosaveAmount);
+            var interval = getAutosaveIntervalMs(pot.autosaveFrequency);
+            if (!Number.isFinite(amount) || amount <= 0 || !interval) {
+              return;
+            }
+
+            var lastRun = Number(pot.autosaveLastRunAt);
+            if (!Number.isFinite(lastRun) || lastRun <= 0) {
+              pot.autosaveLastRunAt = now;
+              potsChanged = true;
+              return;
+            }
+
+            if (now - lastRun < interval) {
+              return;
+            }
+
+            if (balance >= amount) {
+              balance = roundMoney(balance - amount);
+              pot.currentAmount = roundMoney((Number(pot.currentAmount) || 0) + amount);
+              balanceChanged = true;
+              txList.unshift({
+                id: 'auto_' + now + '_' + (txSeq++),
+                direction: 'out',
+                name: 'Auto-save to ' + (pot.name || 'Pot'),
+                amount: roundMoney(amount),
+                note: 'Automatic transfer to pot',
+                icon: '🏦',
+                type: 'Auto-save',
+                category: 'savings',
+                location: 'Lloydbe Pots',
+                createdAt: new Date(now).toISOString()
+              });
+              txChanged = true;
+            }
+
+            pot.autosaveLastRunAt = now;
+            potsChanged = true;
+          });
+
+          if (potsChanged) {
+            savePots(pots);
+          }
+          if (balanceChanged) {
+            saveAccountBalance(balance);
+          }
+          if (txChanged) {
+            saveTransactions(txList);
+          }
+        }
+
+        function getPotContextFromQuery() {
+          var params = new URLSearchParams(window.location.search);
+          var defaultKey = params.get('pot');
+          if (defaultKey && defaultPots[defaultKey]) {
+            var overrides = loadDefaultOverrides();
+            return {
+              kind: 'default',
+              key: defaultKey,
+              pot: Object.assign({}, defaultPots[defaultKey], overrides[defaultKey] || {})
+            };
+          }
+
+          var id = params.get('id');
+          if (!id) {
+            return null;
+          }
+
+          var pots = loadPots();
+          var found = pots.find(function (pot) {
+            return String(pot.id) === String(id);
+          });
+
+          if (!found) {
+            return null;
+          }
+
+          return {
+            kind: 'custom',
+            id: id,
+            pot: Object.assign({}, found)
+          };
+        }
+
+        function syncEditToggleSections() {
+          editFields.inviteOptions.hidden = !editFields.inviteOn.checked;
+          editFields.inviteOptions.style.display = editFields.inviteOn.checked ? 'flex' : 'none';
+
+          editFields.autosaveOptions.hidden = !editFields.autosaveOn.checked;
+          editFields.autosaveOptions.style.display = editFields.autosaveOn.checked ? 'flex' : 'none';
+        }
+
+        function normalizeName(value) {
+          return String(value || '').trim();
+        }
+
+        function buildContributionNames() {
+          var names = ['You'];
+          var invited = Array.isArray(currentPot && currentPot.invitedFriends) ? currentPot.invitedFriends : [];
+          invited.forEach(function (name) {
+            var clean = normalizeName(name);
+            if (!clean) {
+              return;
+            }
+            if (names.indexOf(clean) === -1) {
+              names.push(clean);
+            }
+          });
+
+          var saved = currentPot && currentPot.contributions && typeof currentPot.contributions === 'object'
+            ? currentPot.contributions
+            : {};
+          Object.keys(saved).forEach(function (name) {
+            var clean = normalizeName(name);
+            if (!clean) {
+              return;
+            }
+            if (names.indexOf(clean) === -1) {
+              names.push(clean);
+            }
+          });
+
+          return names;
+        }
+
+        function ensureContributionStore() {
+          if (!currentPot.contributions || typeof currentPot.contributions !== 'object') {
+            currentPot.contributions = {};
+          }
+          buildContributionNames().forEach(function (name) {
+            if (!Number.isFinite(Number(currentPot.contributions[name]))) {
+              currentPot.contributions[name] = 0;
+            }
+          });
+        }
+
+        function renderContributions() {
+          if (!potContributionsCard || !potContributionsList) {
+            return;
+          }
+
+          var invitedCount = Array.isArray(currentPot && currentPot.invitedFriends) ? currentPot.invitedFriends.length : 0;
+          if (invitedCount <= 0) {
+            potContributionsCard.hidden = true;
+            potContributionsList.innerHTML = '';
+            return;
+          }
+
+          ensureContributionStore();
+          var names = buildContributionNames();
+          potContributionsList.innerHTML = '';
+          names.forEach(function (name) {
+            var row = document.createElement('div');
+            row.className = 'pot-detail-row';
+            var label = document.createElement('span');
+            label.textContent = name;
+            var value = document.createElement('strong');
+            value.textContent = formatMoney(Number(currentPot.contributions[name]) || 0);
+            row.appendChild(label);
+            row.appendChild(value);
+            potContributionsList.appendChild(row);
+          });
+          potContributionsCard.hidden = false;
+        }
+
+        function renderPot() {
+          ensureContributionStore();
+          document.getElementById('potNameView').textContent = currentPot.name || 'Pot';
+          document.getElementById('potIconView').textContent = currentPot.icon || '💰';
+          document.getElementById('potGoalView').textContent = formatMoney(currentPot.goal) + ' goal';
+          var saved = Math.max(0, Number(currentPot.currentAmount) || 0);
+          var goal = Math.max(0, Number(currentPot.goal) || 0);
+          var remaining = Math.max(0, goal - saved);
+          var progressPct = goal > 0 ? Math.min(100, Math.round((saved / goal) * 100)) : 0;
+          document.getElementById('potSavedView').textContent = formatMoney(saved);
+          document.getElementById('potRemainingView').textContent = formatMoney(remaining);
+          if (potSavedOfGoalView) {
+            potSavedOfGoalView.textContent = formatMoney(saved) + ' of ' + formatMoney(goal) + ' goal';
+          }
+          if (potProgressPercentView) {
+            potProgressPercentView.textContent = progressPct + '%';
+          }
+          if (potProgressFill) {
+            potProgressFill.style.width = progressPct + '%';
+          }
+          document.getElementById('potDeadlineView').textContent = formatDate(currentPot.deadline);
+          document.getElementById('potInviteView').textContent = currentPot.inviteOn
+            ? (currentPot.invitedFriends && currentPot.invitedFriends.length ? currentPot.invitedFriends.join(', ') : 'On')
+            : 'Off';
+          var autosaveAmount = Number(currentPot.autosaveAmount);
+          var autosaveText = currentPot.autosaveOn ? (currentPot.autosaveFrequency || 'On') : 'Off';
+          if (currentPot.autosaveOn && Number.isFinite(autosaveAmount) && autosaveAmount > 0) {
+            autosaveText += ' · ' + formatMoney(autosaveAmount);
+          }
+          document.getElementById('potAutosaveView').textContent = autosaveText;
+          document.getElementById('potRemindersView').textContent = currentPot.remindersOn ? 'On' : 'Off';
+
+          var hero = document.getElementById('potHero');
+          var potColor = colorMap[currentPot.color] || 'var(--card)';
+          hero.style.background = potColor;
+          if (potAddMoneyCard) {
+            potAddMoneyCard.style.background = potColor;
+          }
+          renderContributions();
+        }
+
+        function setAutosaveFrequency(value) {
+          var radios = Array.from(document.querySelectorAll('input[name="editAutosaveFrequency"]'));
+          var match = radios.find(function (radio) {
+            return radio.value === value;
+          });
+          if (match) {
+            match.checked = true;
+          } else if (radios[0]) {
+            radios[0].checked = true;
+          }
+        }
+
+        function fillEditForm() {
+          editFields.name.value = currentPot.name || '';
+          editFields.icon.value = currentPot.icon || '💰';
+          editFields.goal.value = Number.isFinite(Number(currentPot.goal)) ? Number(currentPot.goal) : 0;
+          editFields.color.value = currentPot.color || 'Forest';
+          editFields.deadline.value = currentPot.deadline || '';
+          editFields.inviteOn.checked = !!currentPot.inviteOn;
+          editFields.autosaveOn.checked = !!currentPot.autosaveOn;
+          editFields.remindersOn.checked = !!currentPot.remindersOn;
+          setAutosaveFrequency(currentPot.autosaveFrequency || 'Daily');
+
+          var selectedFriends = Array.isArray(currentPot.invitedFriends) ? currentPot.invitedFriends : [];
+          Array.from(editFields.inviteOptions.querySelectorAll('input[type="checkbox"]')).forEach(function (input) {
+            input.checked = selectedFriends.indexOf(input.value) !== -1;
+          });
+
+          syncEditToggleSections();
+        }
+
+        function collectFormPot() {
+          var selectedFrequency = document.querySelector('input[name="editAutosaveFrequency"]:checked');
+          var invitedFriends = Array.from(editFields.inviteOptions.querySelectorAll('input[type="checkbox"]:checked')).map(function (input) {
+            return input.value;
+          });
+
+          return {
+            id: currentPot.id,
+            name: (editFields.name.value || '').trim() || 'New Pot',
+            icon: editFields.icon.value || '💰',
+            goal: Number.isFinite(Number(editFields.goal.value)) ? Number(editFields.goal.value) : 0,
+            color: editFields.color.value || 'Forest',
+            deadline: editFields.deadline.value || '',
+            inviteOn: editFields.inviteOn.checked,
+            invitedFriends: editFields.inviteOn.checked ? invitedFriends : [],
+            autosaveOn: editFields.autosaveOn.checked,
+            autosaveFrequency: editFields.autosaveOn.checked ? ((selectedFrequency && selectedFrequency.value) || 'Daily') : '',
+            remindersOn: editFields.remindersOn.checked
+          };
+        }
+
+        function collectInlinePot() {
+          return Object.assign({}, currentPot, {
+            name: (potNameInlineInput && potNameInlineInput.value ? potNameInlineInput.value : '').trim() || 'New Pot',
+            goal: Number.isFinite(Number(potGoalInlineInput && potGoalInlineInput.value)) ? Number(potGoalInlineInput.value) : 0
+          });
+        }
+
+        function addMoneyToPot() {
+          var amount = Number(potAddAmountInput && potAddAmountInput.value);
+          if (!Number.isFinite(amount) || amount <= 0) {
+            if (potAddAmountStatus) {
+              potAddAmountStatus.textContent = 'Enter a valid amount.';
+            }
+            return;
+          }
+
+          var balance = loadAccountBalance();
+          if (amount > balance) {
+            if (potAddAmountStatus) {
+              potAddAmountStatus.textContent = 'Not enough available balance.';
+            }
+            return;
+          }
+
+          currentPot.currentAmount = roundMoney((Number(currentPot.currentAmount) || 0) + amount);
+          ensureContributionStore();
+          currentPot.contributions.You = roundMoney((Number(currentPot.contributions.You) || 0) + amount);
+          saveAccountBalance(balance - amount);
+          var txList = loadTransactions();
+          txList.unshift({
+            id: 'pot_add_' + Date.now(),
+            direction: 'out',
+            name: 'Added to ' + (currentPot.name || 'Pot'),
+            amount: roundMoney(amount),
+            note: 'Manual transfer to pot',
+            icon: '🏦',
+            type: 'Pot transfer',
+            category: 'savings',
+            location: 'Lloydbe Pots',
+            createdAt: new Date().toISOString()
+          });
+          saveTransactions(txList);
+          if (potContext) {
+            persistCurrentPot(currentPot);
+          }
+          renderPot();
+          if (potAddAmountInput) {
+            potAddAmountInput.value = '';
+          }
+          if (potAddAmountStatus) {
+            potAddAmountStatus.textContent = 'Added ' + formatMoney(amount) + ' to this pot.';
+          }
+        }
+
+        function persistCurrentPot(updatedPot) {
+          if (potContext.kind === 'custom') {
+            var pots = loadPots();
+            var idx = pots.findIndex(function (pot) {
+              return String(pot.id) === String(potContext.id);
+            });
+            if (idx !== -1) {
+              pots[idx] = Object.assign({}, pots[idx], updatedPot);
+              savePots(pots);
+            }
+            return;
+          }
+
+          if (potContext.kind === 'default') {
+            var overrides = loadDefaultOverrides();
+            overrides[potContext.key] = Object.assign({}, updatedPot);
+            delete overrides[potContext.key].id;
+            saveDefaultOverrides(overrides);
+          }
+        }
+
+        function setEditMode(on) {
+          isEditMode = on;
+          viewList.hidden = false;
+          editForm.hidden = true;
+          editForm.style.display = 'none';
+          editBtn.textContent = on ? 'Save' : 'Edit';
+
+          if (potNameView) {
+            potNameView.hidden = on;
+          }
+          if (potGoalView) {
+            potGoalView.hidden = on;
+          }
+          if (potNameInlineInput) {
+            potNameInlineInput.hidden = !on;
+            potNameInlineInput.style.display = on ? 'block' : 'none';
+          }
+          if (potGoalInlineWrap) {
+            potGoalInlineWrap.hidden = !on;
+            potGoalInlineWrap.style.display = on ? 'inline-flex' : 'none';
+          }
+          if (potGoalInlineInput) {
+            potGoalInlineInput.disabled = !on;
+          }
+
+          if (on) {
+            if (potNameInlineInput) {
+              potNameInlineInput.value = currentPot.name || '';
+            }
+            if (potGoalInlineInput) {
+              potGoalInlineInput.value = Number.isFinite(Number(currentPot.goal)) ? Number(currentPot.goal) : 0;
+            }
+            if (potNameInlineInput) {
+              potNameInlineInput.focus();
+              potNameInlineInput.select();
+            }
+          }
+
+          if (deletePotBtn) {
+            deletePotBtn.hidden = !(on && potContext && potContext.kind === 'custom');
+          }
+        }
+
+        function openDeleteConfirm() {
+          if (!deletePotConfirm) {
+            return;
+          }
+          deletePotConfirm.hidden = false;
+        }
+
+        function closeDeleteConfirm() {
+          if (!deletePotConfirm) {
+            return;
+          }
+          deletePotConfirm.hidden = true;
+        }
+
+        function deleteCurrentPot() {
+          if (!potContext || potContext.kind !== 'custom') {
+            closeDeleteConfirm();
+            return;
+          }
+
+          var pots = loadPots();
+          var nextPots = pots.filter(function (pot) {
+            return String(pot.id) !== String(potContext.id);
+          });
+          savePots(nextPots);
+          closeDeleteConfirm();
+          window.location.href = 'PotsPage.html';
+        }
+
+        function configureBackLink() {
+          if (!backLink) {
+            return;
+          }
+
+          var params = new URLSearchParams(window.location.search);
+          var source = (params.get('source') || '').toLowerCase();
+          var referrer = document.referrer || '';
+
+          if (source === 'home' || /HomePage.html/i.test(referrer)) {
+            backLink.href = 'HomePage.html';
+            return;
+          }
+
+          backLink.href = 'PotsPage.html';
+        }
+
+        function initialize() {
+          configureBackLink();
+          processPotAutosaves();
+          potContext = getPotContextFromQuery();
+          if (!potContext) {
+            currentPot = {
+              name: 'Pot not found',
+              icon: '❔',
+              goal: 0,
+              currentAmount: 0,
+              color: 'Forest',
+              deadline: '',
+              inviteOn: false,
+              invitedFriends: [],
+              autosaveOn: false,
+              autosaveFrequency: '',
+              remindersOn: false
+            };
+            editBtn.disabled = true;
+          } else {
+            currentPot = potContext.pot;
+          }
+
+          renderPot();
+          setEditMode(false);
+        }
+
+        editFields.inviteOn.addEventListener('change', syncEditToggleSections);
+        editFields.autosaveOn.addEventListener('change', syncEditToggleSections);
+
+        editForm.addEventListener('submit', function (event) {
+          event.preventDefault();
+        });
+
+        [potNameInlineInput, potGoalInlineInput].forEach(function (input) {
+          if (!input) {
+            return;
+          }
+          input.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' && isEditMode) {
+              event.preventDefault();
+              editBtn.click();
+            }
+          });
+        });
+
+        editBtn.addEventListener('click', function () {
+          if (!potContext) {
+            return;
+          }
+          var params = new URLSearchParams(window.location.search);
+          var source = (params.get('source') || '').trim();
+          var target = potContext.kind === 'default'
+            ? 'PotEditPage.html?pot=' + encodeURIComponent(potContext.key)
+            : 'PotEditPage.html?id=' + encodeURIComponent(String(potContext.id));
+          if (source) {
+            target += '&source=' + encodeURIComponent(source);
+          }
+          window.location.href = target;
+        });
+
+        if (deletePotBtn) {
+          deletePotBtn.addEventListener('click', function () {
+            openDeleteConfirm();
+          });
+        }
+
+        if (cancelDeletePotBtn) {
+          cancelDeletePotBtn.addEventListener('click', function () {
+            closeDeleteConfirm();
+          });
+        }
+
+        if (confirmDeletePotBtn) {
+          confirmDeletePotBtn.addEventListener('click', function () {
+            deleteCurrentPot();
+          });
+        }
+
+        if (deletePotConfirm) {
+          deletePotConfirm.addEventListener('click', function (event) {
+            if (event.target === deletePotConfirm) {
+              closeDeleteConfirm();
+            }
+          });
+        }
+
+        if (potAddAmountBtn) {
+          potAddAmountBtn.addEventListener('click', addMoneyToPot);
+        }
+
+        if (potAddAmountInput) {
+          potAddAmountInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              addMoneyToPot();
+            }
+          });
+        }
+
+        initialize();
+      })();
+    </script>
+  </body>
+</html>

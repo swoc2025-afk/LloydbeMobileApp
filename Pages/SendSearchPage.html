@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Search People</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen search-only-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <section class="section search-only-top">
+        <button id="sendSearchBack" class="search-back-arrow" type="button" aria-label="Go back">←</button>
+        <label class="search send-search search-input-row" for="sendSearchInput">
+          <span aria-hidden="true">🔍</span>
+          <input id="sendSearchInput" type="search" placeholder="Search people" autocomplete="off" />
+        </label>
+      </section>
+
+      <section id="sendResults" class="section search-results-stack">
+        <div class="list-item send-person" data-search="amy miller amy.miller@email.com 07700 900111" hidden>
+          <div class="initials" style="background: #ffcfa8;">AM</div>
+          <div class="details">
+            <strong>Amy Miller</strong>
+            <small>amy.miller@email.com · 07700 900111</small>
+          </div>
+          <button class="btn request-send-btn" type="button">Send</button>
+        </div>
+
+        <div class="list-item send-person" data-search="john doe john.doe@email.com 07700 900222" hidden>
+          <div class="initials" style="background: #a8c8ff;">JD</div>
+          <div class="details">
+            <strong>John Doe</strong>
+            <small>john.doe@email.com · 07700 900222</small>
+          </div>
+          <button class="btn request-send-btn" type="button">Send</button>
+        </div>
+
+        <div class="list-item send-person" data-search="zoe smith zoe.smith@email.com 07700 900333" hidden>
+          <div class="initials" style="background: #cbb8ff;">ZS</div>
+          <div class="details">
+            <strong>Zoe Smith</strong>
+            <small>zoe.smith@email.com · 07700 900333</small>
+          </div>
+          <button class="btn request-send-btn" type="button">Send</button>
+        </div>
+
+        <div class="list-item send-person" data-search="ben king ben.king@email.com 07700 900555" hidden>
+          <div class="initials" style="background: #f6c3a0;">BK</div>
+          <div class="details">
+            <strong>Ben King</strong>
+            <small>ben.king@email.com · 07700 900555</small>
+          </div>
+          <button class="btn request-send-btn" type="button">Send</button>
+        </div>
+
+        <div class="list-item send-person" data-search="sarah lee sarah.lee@email.com 07700 900444" hidden>
+          <div class="initials" style="background: #f4b7d6;">SL</div>
+          <div class="details">
+            <strong>Sarah Lee</strong>
+            <small>sarah.lee@email.com · 07700 900444</small>
+          </div>
+          <button class="btn request-send-btn" type="button">Send</button>
+        </div>
+
+        <div id="sendNoResults" class="tx-no-results" hidden>No people match your search.</div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var backBtn = document.getElementById('sendSearchBack');
+        var searchInput = document.getElementById('sendSearchInput');
+        var people = Array.from(document.querySelectorAll('.send-person'));
+        var noResults = document.getElementById('sendNoResults');
+
+        function goBack() {
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            window.location.href = 'SendMoneyPage.html';
+          }
+        }
+
+        function filterPeople() {
+          var query = (searchInput.value || '').trim().toLowerCase();
+          if (query === '') {
+            people.forEach(function (person) {
+              person.hidden = true;
+            });
+            noResults.hidden = true;
+            return;
+          }
+
+          var visibleCount = 0;
+          people.forEach(function (person) {
+            var nameEl = person.querySelector('strong');
+            var nameText = (nameEl ? nameEl.textContent : '').toLowerCase();
+            var isMatch = nameText.indexOf(query) !== -1;
+            person.hidden = !isMatch;
+            if (isMatch) {
+              visibleCount += 1;
+            }
+          });
+
+          noResults.hidden = visibleCount > 0;
+        }
+
+        backBtn.addEventListener('click', goBack);
+        searchInput.addEventListener('input', filterPeople);
+        searchInput.focus();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Send To Recipient</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen request-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="SendMoneyPage.html">◀ Back</a>
+        <div class="page-title">Send Money</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section">
+        <div class="send-recipient-hero">
+          <div id="recipientInitials" class="initials" style="background: #d8cdfa;">NA</div>
+          <div class="details">
+            <strong id="recipientName">Recipient</strong>
+            <small id="recipientDetail">Bank account</small>
+          </div>
+        </div>
+
+        <form id="sendRecipientForm" class="create-pot-form">
+          <label class="field-block" for="sendAmount">
+            <span class="field-title">Amount (£)</span>
+            <input id="sendAmount" class="input" type="number" min="0.01" step="0.01" placeholder="0.00" required />
+          </label>
+
+          <label class="field-block" for="sendNote">
+            <span class="field-title">Note (optional)</span>
+            <input id="sendNote" class="input" type="text" placeholder="Dinner, rent, gift..." />
+          </label>
+
+          <button id="confirmSendBtn" class="btn primary" type="submit" style="margin-top: 10px;">Send money</button>
+        </form>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var ACCOUNT_BALANCE_KEY = 'lloydbeAccountBalanceV1';
+        var INITIAL_ACCOUNT_BALANCE = 1000;
+        var SEND_RECENTS_KEY = 'lloydbeSendRecentsV1';
+        var TRANSACTIONS_KEY = 'lloydbeTransactionsV1';
+        var CURRENT_USER_KEY = 'lloydbeCurrentUserV1';
+        var NAME_KEY_PREFIX = 'lloydbeSignupNameV1::user::';
+        var TAG_KEY_PREFIX = 'lloydbeLloydsTagV1::user::';
+        var form = document.getElementById('sendRecipientForm');
+        var amountInput = document.getElementById('sendAmount');
+        var noteInput = document.getElementById('sendNote');
+        var button = document.getElementById('confirmSendBtn');
+
+        var nameEl = document.getElementById('recipientName');
+        var detailEl = document.getElementById('recipientDetail');
+        var initialsEl = document.getElementById('recipientInitials');
+
+        var params = new URLSearchParams(window.location.search);
+        var name = (params.get('name') || '').trim() || 'Recipient';
+        var detail = (params.get('detail') || '').trim() || 'Bank account';
+        var initials = (params.get('initials') || '').trim() || 'NA';
+        var color = (params.get('color') || '').trim() || '#d8cdfa';
+        var recipientId = (params.get('id') || '').trim();
+        var recipientOwner = (params.get('owner') || '').trim().toLowerCase();
+
+        nameEl.textContent = name;
+        detailEl.textContent = detail;
+        initialsEl.textContent = initials.slice(0, 2).toUpperCase();
+        initialsEl.style.background = color;
+
+        function roundMoney(value) {
+          return Math.round(Number(value) * 100) / 100;
+        }
+
+        function loadBalance() {
+          var raw = Number(localStorage.getItem(ACCOUNT_BALANCE_KEY));
+          if (Number.isFinite(raw)) {
+            return raw;
+          }
+          localStorage.setItem(ACCOUNT_BALANCE_KEY, String(INITIAL_ACCOUNT_BALANCE));
+          return INITIAL_ACCOUNT_BALANCE;
+        }
+
+        function scopedKeyForUser(baseKey, owner) {
+          if (!owner || !window.LloydbeUserScope || typeof window.LloydbeUserScope.toScopedKey !== 'function') {
+            return baseKey;
+          }
+          return window.LloydbeUserScope.toScopedKey(baseKey, owner);
+        }
+
+        function loadBalanceForUser(owner) {
+          var balanceKey = scopedKeyForUser(ACCOUNT_BALANCE_KEY, owner);
+          var raw = Number(localStorage.getItem(balanceKey));
+          if (Number.isFinite(raw)) {
+            return raw;
+          }
+          localStorage.setItem(balanceKey, String(INITIAL_ACCOUNT_BALANCE));
+          return INITIAL_ACCOUNT_BALANCE;
+        }
+
+        function saveBalanceForUser(owner, balance) {
+          var balanceKey = scopedKeyForUser(ACCOUNT_BALANCE_KEY, owner);
+          localStorage.setItem(balanceKey, String(roundMoney(balance)));
+        }
+
+        function loadTransactionsForUser(owner) {
+          var txKey = scopedKeyForUser(TRANSACTIONS_KEY, owner);
+          try {
+            var parsed = JSON.parse(localStorage.getItem(txKey) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveTransactionsForUser(owner, items) {
+          var txKey = scopedKeyForUser(TRANSACTIONS_KEY, owner);
+          localStorage.setItem(txKey, JSON.stringify(Array.isArray(items) ? items.slice(0, 150) : []));
+        }
+
+        function getCurrentUserId() {
+          return String(localStorage.getItem(CURRENT_USER_KEY) || '').trim().toLowerCase();
+        }
+
+        function readProfileName(owner) {
+          if (!owner) {
+            return '';
+          }
+          try {
+            var raw = localStorage.getItem(NAME_KEY_PREFIX + owner);
+            var parsed = raw ? JSON.parse(raw) : null;
+            if (!parsed || typeof parsed !== 'object') {
+              return '';
+            }
+            var first = String(parsed.firstName || '').trim();
+            var last = String(parsed.lastName || '').trim();
+            return (first + ' ' + last).trim();
+          } catch (error) {
+            return '';
+          }
+        }
+
+        function readLloydsTag(owner) {
+          if (!owner) {
+            return '';
+          }
+          return String(localStorage.getItem(TAG_KEY_PREFIX + owner) || '').trim().replace(/^@+/, '');
+        }
+
+        function senderDisplayName() {
+          var owner = getCurrentUserId();
+          var nameValue = readProfileName(owner);
+          if (nameValue) {
+            return nameValue;
+          }
+          var tagValue = readLloydsTag(owner);
+          if (tagValue) {
+            return '@' + tagValue;
+          }
+          return 'Lloydbe user';
+        }
+
+        function rememberRecentRecipient() {
+          if (!recipientId) {
+            return;
+          }
+          var recents = [];
+          try {
+            var parsed = JSON.parse(localStorage.getItem(SEND_RECENTS_KEY) || '[]');
+            recents = Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            recents = [];
+          }
+
+          recents = recents.filter(function (id) {
+            return String(id || '') !== recipientId;
+          });
+          recents.unshift(recipientId);
+          localStorage.setItem(SEND_RECENTS_KEY, JSON.stringify(recents.slice(0, 12)));
+        }
+
+        function recordSendTransaction(amount, note) {
+          var entry = {
+            id: 'p2p_' + Date.now(),
+            kind: 'transfer',
+            direction: 'out',
+            name: name,
+            amount: roundMoney(amount),
+            note: note || '',
+            icon: '↗️',
+            category: 'transfer send',
+            type: 'Sent money',
+            location: 'Lloydbe transfer',
+            createdAt: new Date().toISOString(),
+            color: '#efe9ff'
+          };
+
+          var items = [];
+          try {
+            var parsed = JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || '[]');
+            items = Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            items = [];
+          }
+          items.unshift(entry);
+          localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(items.slice(0, 150)));
+        }
+
+        function recordIncomingTransactionForRecipient(amount, note) {
+          if (!recipientOwner) {
+            return;
+          }
+
+          var items = loadTransactionsForUser(recipientOwner);
+          items.unshift({
+            id: 'p2p_in_' + Date.now(),
+            kind: 'transfer',
+            direction: 'in',
+            name: senderDisplayName(),
+            amount: roundMoney(amount),
+            note: note || '',
+            icon: '↘️',
+            category: 'transfer receive',
+            type: 'Received money',
+            location: 'Lloydbe transfer',
+            createdAt: new Date().toISOString(),
+            color: '#e7f8ee'
+          });
+          saveTransactionsForUser(recipientOwner, items);
+        }
+
+        function creditRecipient(amount, note) {
+          var senderOwner = getCurrentUserId();
+          if (!recipientOwner || recipientOwner === senderOwner) {
+            return;
+          }
+          var nextRecipientBalance = roundMoney(loadBalanceForUser(recipientOwner) + amount);
+          saveBalanceForUser(recipientOwner, nextRecipientBalance);
+          recordIncomingTransactionForRecipient(amount, note);
+        }
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var amount = Number(amountInput.value);
+          var note = (noteInput.value || '').trim();
+          if (!Number.isFinite(amount) || amount <= 0) {
+            return;
+          }
+
+          var currentBalance = loadBalance();
+          if (amount > currentBalance) {
+            button.textContent = 'Insufficient funds';
+            window.setTimeout(function () {
+              button.textContent = 'Send money';
+            }, 900);
+            return;
+          }
+
+          var nextBalance = roundMoney(currentBalance - amount);
+          localStorage.setItem(ACCOUNT_BALANCE_KEY, String(nextBalance));
+          rememberRecentRecipient();
+          recordSendTransaction(amount, note);
+          creditRecipient(amount, note);
+
+          button.textContent = 'Sent';
+          window.setTimeout(function () {
+            var returnUrl = 'SendMoneyPage.html';
+            if (note) {
+              returnUrl += '?sent=1';
+            }
+            window.location.href = returnUrl;
+          }, 350);
+        });
+      })();
+    </script>
+  </body>
+</html>

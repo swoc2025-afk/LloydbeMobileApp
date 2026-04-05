@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create Account - Name</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen auth-screen login-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="CreateAccountTermsPage.html">◀ Back</a>
+        <div class="page-title">Your Name</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <main class="auth-main auth-main-login">
+        <div class="logo-wrap logo-wrap-login" aria-label="Lloydbe logo">
+          <img class="logo-image" src="../logo.png" alt="Lloydbe" />
+        </div>
+
+        <form id="nameForm" class="login-form" novalidate>
+          <p class="auth-helper">Name as in your official documents.</p>
+
+          <div class="name-input-row" data-target="firstName">
+            <input id="firstName" class="auth-input" type="text" placeholder="First name" autocomplete="given-name" autocapitalize="words" spellcheck="false" />
+          </div>
+
+          <div class="name-input-row" data-target="lastName">
+            <input id="lastName" class="auth-input" type="text" placeholder="Last name" autocomplete="family-name" autocapitalize="words" spellcheck="false" />
+          </div>
+
+          <div id="nameStatus" class="login-status" role="status" aria-live="polite"></div>
+          <button class="auth-btn" type="submit">Continue</button>
+        </form>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var NAME_KEY = 'lloydbeSignupNameV1';
+        var form = document.getElementById('nameForm');
+        var firstInput = document.getElementById('firstName');
+        var lastInput = document.getElementById('lastName');
+        var statusEl = document.getElementById('nameStatus');
+        var rows = document.querySelectorAll('.name-input-row');
+
+        rows.forEach(function (row) {
+          row.addEventListener('click', function () {
+            var targetId = row.getAttribute('data-target');
+            var input = targetId ? document.getElementById(targetId) : null;
+            if (input) {
+              input.focus();
+            }
+          });
+        });
+
+        firstInput.disabled = false;
+        firstInput.readOnly = false;
+        lastInput.disabled = false;
+        lastInput.readOnly = false;
+
+        function setStatus(message, isError) {
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('error', !!isError);
+        }
+
+        function cleanName(value) {
+          return String(value || '').replace(/\s+/g, ' ').trim();
+        }
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var firstName = cleanName(firstInput.value);
+          var lastName = cleanName(lastInput.value);
+
+          if (!firstName || !lastName) {
+            setStatus('Enter both first and last name.', true);
+            return;
+          }
+
+          localStorage.setItem(NAME_KEY, JSON.stringify({
+            firstName: firstName,
+            lastName: lastName,
+            savedAt: Date.now()
+          }));
+
+          setStatus('Name saved. Continue signup...', false);
+          window.setTimeout(function () {
+            window.location.href = 'CreateAccountDobPage.html';
+          }, 220);
+        });
+      })();
+    </script>
+  </body>
+</html>

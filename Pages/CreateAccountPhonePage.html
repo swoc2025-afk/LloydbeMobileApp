@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create Account - Phone</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen auth-screen login-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="../App.html">◀ Back</a>
+        <div class="page-title">Create Account</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <main class="auth-main auth-main-login">
+        <div class="logo-wrap logo-wrap-login" aria-label="Lloydbe logo">
+          <img class="logo-image" src="../logo.png" alt="Lloydbe" />
+        </div>
+
+        <form id="createPhoneForm" class="login-form" novalidate>
+          <p class="auth-helper">Enter your phone number to receive a 6-digit code.</p>
+
+          <div class="phone-input-row" aria-label="Phone number input">
+            <select id="countryCodeSelect" class="country-code-select" aria-label="Country code">
+              <option value="+44" selected>UK +44</option>
+              <option value="+1">US +1</option>
+              <option value="+353">Ireland +353</option>
+              <option value="+33">France +33</option>
+              <option value="+49">Germany +49</option>
+              <option value="+34">Spain +34</option>
+              <option value="+39">Italy +39</option>
+              <option value="+31">Netherlands +31</option>
+              <option value="+61">Australia +61</option>
+              <option value="+64">New Zealand +64</option>
+              <option value="+91">India +91</option>
+              <option value="+971">UAE +971</option>
+            </select>
+            <input
+              id="signupPhone"
+              class="auth-input"
+              type="text"
+              inputmode="tel"
+              placeholder="Phone number"
+              autocomplete="tel-national"
+              autocapitalize="off"
+              spellcheck="false"
+            />
+          </div>
+
+          <div id="signupPhoneStatus" class="login-status" role="status" aria-live="polite"></div>
+          <button id="sendCodeBtn" class="auth-btn" type="submit">Send code</button>
+        </form>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var SIGNUP_KEY = 'lloydbeSignupVerificationV1';
+        var SMS_API_KEY = 'lloydbeSmsApiUrl';
+        var DEFAULT_SMS_API = 'http://localhost:3001/api/send-login-code';
+
+        var form = document.getElementById('createPhoneForm');
+        var countryCodeSelect = document.getElementById('countryCodeSelect');
+        var phoneInput = document.getElementById('signupPhone');
+        var statusEl = document.getElementById('signupPhoneStatus');
+        var sendBtn = document.getElementById('sendCodeBtn');
+        var phoneRow = document.querySelector('.phone-input-row');
+
+        function setStatus(message, isError) {
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('error', !!isError);
+        }
+
+        function getSmsApiUrl() {
+          return localStorage.getItem(SMS_API_KEY) || DEFAULT_SMS_API;
+        }
+
+        function normalizeLocalPhone(value) {
+          var digits = String(value || '').replace(/\D/g, '');
+          if (digits.startsWith('00')) {
+            digits = digits.slice(2);
+          }
+          return digits;
+        }
+
+        function normalizePhoneForCountry(localDigits, countryCode) {
+          var digits = String(localDigits || '');
+          var countryDigits = String(countryCode || '').replace(/\D/g, '');
+
+          if (countryDigits && digits.startsWith(countryDigits)) {
+            digits = digits.slice(countryDigits.length);
+          }
+
+          if (digits.startsWith('0')) {
+            digits = digits.slice(1);
+          }
+          return digits;
+        }
+
+        function isValidInternationalPhone(countryCode, localDigits) {
+          var countryDigits = String(countryCode || '').replace(/\D/g, '');
+          var local = String(localDigits || '');
+          var fullDigits = countryDigits + local;
+
+          if (!countryDigits || !local) {
+            return false;
+          }
+
+          if (!/^\d+$/.test(local)) {
+            return false;
+          }
+
+          return fullDigits.length >= 8 && fullDigits.length <= 15;
+        }
+
+        function persistAndContinue(fullPhone) {
+          localStorage.setItem(SIGNUP_KEY, JSON.stringify({
+            phone: fullPhone,
+            code: '200086',
+            expiresAt: Date.now() + (5 * 60 * 1000)
+          }));
+
+          window.setTimeout(function () {
+            window.location.href = 'CreateAccountCodePage.html';
+          }, 240);
+        }
+
+        if (phoneRow && phoneInput) {
+          phoneRow.addEventListener('click', function (event) {
+            if (event && event.target && event.target.id === 'countryCodeSelect') {
+              return;
+            }
+            phoneInput.focus();
+          });
+        }
+
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault();
+          setStatus('', false);
+
+          var selectedCode = String((countryCodeSelect && countryCodeSelect.value) || '+44');
+          var localDigits = normalizePhoneForCountry(normalizeLocalPhone(phoneInput.value), selectedCode);
+
+          if (!isValidInternationalPhone(selectedCode, localDigits)) {
+            setStatus('Enter a valid phone number.', true);
+            return;
+          }
+
+          var fullPhone = selectedCode + localDigits;
+          var apiUrl = getSmsApiUrl();
+          sendBtn.disabled = true;
+
+          try {
+            var response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phoneNumber: fullPhone })
+            });
+
+            var payload = null;
+            try {
+              payload = await response.json();
+            } catch (parseErr) {
+              payload = null;
+            }
+
+            if (!response.ok || !payload || payload.ok !== true) {
+              setStatus('SMS service unavailable. Continue with test code 000000.', false);
+              persistAndContinue(fullPhone);
+              return;
+            }
+
+            setStatus('Code sent. Enter the 6-digit code to continue.', false);
+            persistAndContinue(fullPhone);
+          } catch (error) {
+            setStatus('SMS service unavailable. Continue with test code 000000.', false);
+            persistAndContinue(fullPhone);
+          } finally {
+            sendBtn.disabled = false;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Edit Pot</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a id="editPotBackLink" class="back-link" href="PotsPage.html">◀ Cancel</a>
+        <div class="page-title">Edit Pot</div>
+        <div style="width: 52px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: 0;">
+        <div style="color: var(--muted); font-size: 12px;">Update your pot details</div>
+      </section>
+
+      <form class="form create-pot-form" id="editPotForm">
+        <label class="field-block">
+          <div class="field-title">Color</div>
+          <div class="color-picker" role="radiogroup" aria-label="Choose pot color">
+            <input id="pot-color-forest" type="radio" name="potColor" value="Forest" />
+            <label class="color-swatch" for="pot-color-forest" style="--swatch: var(--green-forest);" aria-label="Forest"></label>
+
+            <input id="pot-color-pine" type="radio" name="potColor" value="Pine" />
+            <label class="color-swatch" for="pot-color-pine" style="--swatch: var(--green-pine);" aria-label="Pine"></label>
+
+            <input id="pot-color-sage" type="radio" name="potColor" value="Sage" />
+            <label class="color-swatch" for="pot-color-sage" style="--swatch: var(--green-sage);" aria-label="Sage"></label>
+
+            <input id="pot-color-jade" type="radio" name="potColor" value="Jade" />
+            <label class="color-swatch" for="pot-color-jade" style="--swatch: var(--green-jade);" aria-label="Jade"></label>
+
+            <input id="pot-color-meadow" type="radio" name="potColor" value="Meadow" />
+            <label class="color-swatch" for="pot-color-meadow" style="--swatch: var(--green-meadow);" aria-label="Meadow"></label>
+
+            <input id="pot-color-evergreen" type="radio" name="potColor" value="Evergreen" />
+            <label class="color-swatch" for="pot-color-evergreen" style="--swatch: var(--green-evergreen);" aria-label="Evergreen"></label>
+          </div>
+          <small class="field-note">Selected: <span id="selectedColorLabel">Forest</span></small>
+        </label>
+
+        <label class="field-block">
+          <div class="field-title">Name your Pot</div>
+          <input id="potName" class="input" placeholder="Holiday" />
+        </label>
+
+        <label class="field-block">
+          <div class="field-title">Pot icon</div>
+          <select id="potIcon" class="input" aria-label="Choose a pot icon">
+            <option value="✈️">✈️ Travel</option>
+            <option value="🎂">🎂 Birthday</option>
+            <option value="🎓">🎓 Education</option>
+            <option value="🚗">🚗 Car</option>
+            <option value="🏠">🏠 Home</option>
+            <option value="💍">💍 Wedding</option>
+            <option value="🛍️">🛍️ Shopping</option>
+            <option value="🧳">🧳 Trip</option>
+            <option value="💰">💰 Savings</option>
+          </select>
+        </label>
+
+        <label class="field-block">
+          <div class="field-title">Goal</div>
+          <input id="potGoal" class="input" type="number" min="0" step="10" value="0" placeholder="£" />
+        </label>
+
+        <div class="toggle-row">
+          <div class="field-title" style="margin: 0;">Invite people</div>
+          <label class="switch-control" for="inviteToggle">
+            <input id="inviteToggle" type="checkbox" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div id="inviteOptions" class="invite-options" hidden>
+          <label class="friend-pill"><input type="checkbox" value="Amy Miller" /><span>Amy Miller</span></label>
+          <label class="friend-pill"><input type="checkbox" value="John Doe" /><span>John Doe</span></label>
+          <label class="friend-pill"><input type="checkbox" value="Zoe Smith" /><span>Zoe Smith</span></label>
+          <label class="friend-pill"><input type="checkbox" value="Ben King" /><span>Ben King</span></label>
+          <label class="friend-pill"><input type="checkbox" value="Sarah Lee" /><span>Sarah Lee</span></label>
+        </div>
+
+        <div class="toggle-row">
+          <div class="field-title" style="margin: 0;">Auto-save</div>
+          <label class="switch-control" for="autosaveToggle">
+            <input id="autosaveToggle" type="checkbox" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div id="autosaveOptions" class="autosave-options" hidden>
+          <label><input type="radio" name="autosaveFrequency" value="Daily" checked /><span>Daily</span></label>
+          <label><input type="radio" name="autosaveFrequency" value="Weekly" /><span>Weekly</span></label>
+          <label><input type="radio" name="autosaveFrequency" value="Monthly" /><span>Monthly</span></label>
+        </div>
+
+        <label id="autosaveAmountWrap" class="field-block" hidden>
+          <div class="field-title">Auto-save amount (£)</div>
+          <input id="autosaveAmount" class="input" type="number" min="0.01" step="0.01" placeholder="10.00" />
+          <small id="autosaveAmountError" class="field-note" style="color:#c14f4f; display:none;">Enter an auto-save amount greater than 0.</small>
+        </label>
+
+        <label class="field-block">
+          <div class="field-title">Goal deadline</div>
+          <input id="goalDeadline" class="input" type="date" aria-label="Goal deadline" />
+        </label>
+
+        <div class="toggle-row">
+          <div class="field-title" style="margin: 0;">Reminders</div>
+          <label class="switch-control" for="remindersToggle">
+            <input id="remindersToggle" type="checkbox" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top: 6px;">
+          <button id="cancelEditPotBtn" class="btn" type="button" style="flex: 1; background: #ffffff; border: 1px solid #cdc4b7; color: #433d37;">Cancel</button>
+          <button id="savePotBtn" class="cta" type="button" style="flex: 1;">Save changes</button>
+        </div>
+        <button id="deletePotBtn" class="btn challenge-delete-btn" type="button" style="width: 100%; margin-top: 10px;" hidden>Delete pot</button>
+      </form>
+    </div>
+
+    <div id="deletePotConfirm" class="confirm-overlay" hidden>
+      <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="deletePotTitle">
+        <h3 id="deletePotTitle">Delete this pot?</h3>
+        <p>Are you sure you want to delete this pot? This can’t be undone.</p>
+        <div class="confirm-actions">
+          <button id="cancelDeletePotBtn" class="btn" type="button">Cancel</button>
+          <button id="confirmDeletePotBtn" class="challenge-delete-btn" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+      <a class="nav-item active" href="HomePage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <path d="M3 10.5l9-7 9 7" />
+          <path d="M5 9.5V20h14V9.5" />
+        </svg>
+        <span>HOME</span>
+      </a>
+      <a class="nav-item" href="TrendsPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4v8h8" />
+          <path d="M12 12l5.5 5.5" />
+        </svg>
+        <span>BUDGET</span>
+      </a>
+      <a class="nav-item social-tab" href="SocialPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="8" r="2.8" />
+          <circle cx="15.8" cy="8.4" r="2.4" />
+          <path d="M3.8 18.7c0-2.6 2.1-4.7 4.7-4.7h5.2c2.6 0 4.7 2.1 4.7 4.7 0 .8-.6 1.5-1.4 1.5H5.2c-.8 0-1.4-.7-1.4-1.5z" />
+        </svg>
+        <span>SOCIAL</span>
+      </a>
+      <a class="nav-item challenges-tab" href="ChallengesPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 5h8v3.6a4 4 0 0 1-8 0V5z" />
+          <path d="M8 7H6.5a2.5 2.5 0 0 0 0 5H8" />
+          <path d="M16 7h1.5a2.5 2.5 0 0 1 0 5H16" />
+          <path d="M12 12.6V16" />
+          <path d="M9.4 19h5.2" />
+        </svg>
+        <span>CHALLENGES</span>
+      </a>
+    </nav>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbePots';
+        var DEFAULT_OVERRIDE_KEY = 'lloydbeDefaultPotOverrides';
+
+        var defaultPots = {
+          holiday: {
+            name: 'Holiday',
+            icon: '✈️',
+            goal: 450,
+            currentAmount: 0,
+            color: 'Forest',
+            deadline: '',
+            inviteOn: false,
+            invitedFriends: [],
+            autosaveOn: false,
+            autosaveFrequency: '',
+            remindersOn: false
+          },
+          birthday: {
+            name: 'Birthday',
+            icon: '🎂',
+            goal: 120.5,
+            currentAmount: 0,
+            color: 'Sage',
+            deadline: '',
+            inviteOn: false,
+            invitedFriends: [],
+            autosaveOn: false,
+            autosaveFrequency: '',
+            remindersOn: false
+          }
+        };
+
+        var inviteToggle = document.getElementById('inviteToggle');
+        var autosaveToggle = document.getElementById('autosaveToggle');
+        var remindersToggle = document.getElementById('remindersToggle');
+        var inviteOptions = document.getElementById('inviteOptions');
+        var autosaveOptions = document.getElementById('autosaveOptions');
+        var autosaveAmountWrap = document.getElementById('autosaveAmountWrap');
+        var autosaveAmountInput = document.getElementById('autosaveAmount');
+        var autosaveAmountError = document.getElementById('autosaveAmountError');
+        var colorLabel = document.getElementById('selectedColorLabel');
+        var colorRadios = Array.from(document.querySelectorAll('input[name="potColor"]'));
+
+        var potNameInput = document.getElementById('potName');
+        var potIconSelect = document.getElementById('potIcon');
+        var potGoalInput = document.getElementById('potGoal');
+        var deadlineInput = document.getElementById('goalDeadline');
+        var saveButton = document.getElementById('savePotBtn');
+        var cancelButton = document.getElementById('cancelEditPotBtn');
+        var backLink = document.getElementById('editPotBackLink');
+        var deletePotBtn = document.getElementById('deletePotBtn');
+        var deleteConfirm = document.getElementById('deletePotConfirm');
+        var cancelDeletePotBtn = document.getElementById('cancelDeletePotBtn');
+        var confirmDeletePotBtn = document.getElementById('confirmDeletePotBtn');
+
+        var potContext = null;
+        var currentPot = null;
+
+        function roundMoney(value) {
+          return Math.round(Number(value) * 100) / 100;
+        }
+
+        function parseParams() {
+          return new URLSearchParams(window.location.search);
+        }
+
+        function buildDetailUrl() {
+          if (!potContext) {
+            return 'PotsPage.html';
+          }
+          var query = potContext.kind === 'default'
+            ? 'pot=' + encodeURIComponent(potContext.key)
+            : 'id=' + encodeURIComponent(String(potContext.id));
+          var params = parseParams();
+          var source = (params.get('source') || '').trim();
+          if (source) {
+            query += '&source=' + encodeURIComponent(source);
+          }
+          return 'PotDetailPage.html?' + query;
+        }
+
+        function loadPots() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function savePots(pots) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(pots));
+        }
+
+        function loadDefaultOverrides() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(DEFAULT_OVERRIDE_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+          } catch (error) {
+            return {};
+          }
+        }
+
+        function saveDefaultOverrides(data) {
+          localStorage.setItem(DEFAULT_OVERRIDE_KEY, JSON.stringify(data));
+        }
+
+        function getPotContextFromQuery() {
+          var params = parseParams();
+          var defaultKey = params.get('pot');
+          if (defaultKey && defaultPots[defaultKey]) {
+            var overrides = loadDefaultOverrides();
+            return {
+              kind: 'default',
+              key: defaultKey,
+              pot: Object.assign({}, defaultPots[defaultKey], overrides[defaultKey] || {})
+            };
+          }
+
+          var id = params.get('id');
+          if (!id) {
+            return null;
+          }
+
+          var pots = loadPots();
+          var found = pots.find(function (pot) {
+            return String(pot.id) === String(id);
+          });
+
+          if (!found) {
+            return null;
+          }
+
+          return {
+            kind: 'custom',
+            id: id,
+            pot: Object.assign({}, found)
+          };
+        }
+
+        function syncToggleState() {
+          var inviteOpen = inviteToggle.checked;
+          var autosaveOpen = autosaveToggle.checked;
+
+          inviteOptions.hidden = !inviteOpen;
+          inviteOptions.style.display = inviteOpen ? 'flex' : 'none';
+
+          autosaveOptions.hidden = !autosaveOpen;
+          autosaveOptions.style.display = autosaveOpen ? 'flex' : 'none';
+          autosaveAmountWrap.hidden = !autosaveOpen;
+          autosaveAmountWrap.style.display = autosaveOpen ? 'grid' : 'none';
+          if (!autosaveOpen && autosaveAmountError) {
+            autosaveAmountError.style.display = 'none';
+          }
+        }
+
+        function syncColorLabel() {
+          var selected = colorRadios.find(function (radio) {
+            return radio.checked;
+          });
+          colorLabel.textContent = selected ? selected.value : 'Forest';
+        }
+
+        function setSelectedColor(value) {
+          var normalized = value || 'Forest';
+          var matched = false;
+          colorRadios.forEach(function (radio) {
+            var isMatch = radio.value === normalized;
+            radio.checked = isMatch;
+            if (isMatch) {
+              matched = true;
+            }
+          });
+          if (!matched && colorRadios[0]) {
+            colorRadios[0].checked = true;
+          }
+          syncColorLabel();
+        }
+
+        function getSelectedColor() {
+          var selected = colorRadios.find(function (radio) {
+            return radio.checked;
+          });
+          return selected ? selected.value : 'Forest';
+        }
+
+        function getAutosaveFrequency() {
+          var selected = document.querySelector('input[name="autosaveFrequency"]:checked');
+          return selected ? selected.value : 'Daily';
+        }
+
+        function setAutosaveFrequency(value) {
+          var radios = Array.from(document.querySelectorAll('input[name="autosaveFrequency"]'));
+          var found = radios.find(function (radio) {
+            return radio.value === value;
+          });
+          if (found) {
+            found.checked = true;
+          } else if (radios[0]) {
+            radios[0].checked = true;
+          }
+        }
+
+        function getInvitedFriends() {
+          return Array.from(inviteOptions.querySelectorAll('input[type="checkbox"]:checked')).map(function (input) {
+            return input.value;
+          });
+        }
+
+        function setInvitedFriends(names) {
+          var list = Array.isArray(names) ? names : [];
+          Array.from(inviteOptions.querySelectorAll('input[type="checkbox"]')).forEach(function (input) {
+            input.checked = list.indexOf(input.value) !== -1;
+          });
+        }
+
+        function fillFormFromPot(pot) {
+          potNameInput.value = pot.name || '';
+          potIconSelect.value = pot.icon || '💰';
+          potGoalInput.value = Number.isFinite(Number(pot.goal)) ? Number(pot.goal) : 0;
+          deadlineInput.value = pot.deadline || '';
+          remindersToggle.checked = !!pot.remindersOn;
+          inviteToggle.checked = !!pot.inviteOn;
+          autosaveToggle.checked = !!pot.autosaveOn;
+          autosaveAmountInput.value = Number.isFinite(Number(pot.autosaveAmount)) && Number(pot.autosaveAmount) > 0 ? String(Number(pot.autosaveAmount)) : '';
+          setInvitedFriends(pot.invitedFriends || []);
+          setAutosaveFrequency(pot.autosaveFrequency || 'Daily');
+          setSelectedColor(pot.color || 'Forest');
+          syncToggleState();
+        }
+
+        function persistUpdatedPot(updatedPot) {
+          if (!potContext) {
+            return;
+          }
+
+          if (potContext.kind === 'custom') {
+            var pots = loadPots();
+            var idx = pots.findIndex(function (pot) {
+              return String(pot.id) === String(potContext.id);
+            });
+            if (idx !== -1) {
+              pots[idx] = Object.assign({}, pots[idx], updatedPot);
+              savePots(pots);
+            }
+            return;
+          }
+
+          var overrides = loadDefaultOverrides();
+          overrides[potContext.key] = Object.assign({}, updatedPot);
+          delete overrides[potContext.key].id;
+          saveDefaultOverrides(overrides);
+        }
+
+        function saveChanges() {
+          if (!currentPot) {
+            return;
+          }
+
+          var name = (potNameInput.value || '').trim() || 'New Pot';
+          var icon = potIconSelect.value || '💰';
+          var goal = Number(potGoalInput.value || 0);
+          var autosaveOn = autosaveToggle.checked;
+          var autosaveAmount = Number(autosaveAmountInput && autosaveAmountInput.value);
+
+          if (autosaveOn && (!Number.isFinite(autosaveAmount) || autosaveAmount <= 0)) {
+            if (autosaveAmountError) {
+              autosaveAmountError.style.display = 'block';
+            }
+            if (autosaveAmountInput) {
+              autosaveAmountInput.focus();
+            }
+            return;
+          }
+          if (autosaveAmountError) {
+            autosaveAmountError.style.display = 'none';
+          }
+
+          var nextAutosaveLastRunAt = Number(currentPot.autosaveLastRunAt);
+          if (!Number.isFinite(nextAutosaveLastRunAt) || nextAutosaveLastRunAt <= 0) {
+            nextAutosaveLastRunAt = Date.now();
+          }
+          if (autosaveOn && !currentPot.autosaveOn) {
+            nextAutosaveLastRunAt = Date.now();
+          }
+
+          var updatedPot = Object.assign({}, currentPot, {
+            id: currentPot.id,
+            name: name,
+            icon: icon,
+            goal: Number.isFinite(goal) ? goal : 0,
+            color: getSelectedColor(),
+            deadline: deadlineInput.value || '',
+            remindersOn: remindersToggle.checked,
+            inviteOn: inviteToggle.checked,
+            invitedFriends: inviteToggle.checked ? getInvitedFriends() : [],
+            autosaveOn: autosaveOn,
+            autosaveFrequency: autosaveOn ? getAutosaveFrequency() : '',
+            autosaveAmount: autosaveOn ? roundMoney(autosaveAmount) : 0,
+            autosaveLastRunAt: autosaveOn ? nextAutosaveLastRunAt : Date.now()
+          });
+
+          persistUpdatedPot(updatedPot);
+          window.location.href = buildDetailUrl();
+        }
+
+        function cancelChanges() {
+          window.location.href = buildDetailUrl();
+        }
+
+        function openDeleteConfirm() {
+          if (!deleteConfirm) {
+            return;
+          }
+          deleteConfirm.hidden = false;
+        }
+
+        function closeDeleteConfirm() {
+          if (!deleteConfirm) {
+            return;
+          }
+          deleteConfirm.hidden = true;
+        }
+
+        function deleteCurrentPot() {
+          if (!potContext || potContext.kind !== 'custom') {
+            closeDeleteConfirm();
+            return;
+          }
+
+          var pots = loadPots();
+          var nextPots = pots.filter(function (pot) {
+            return String(pot.id) !== String(potContext.id);
+          });
+          savePots(nextPots);
+          closeDeleteConfirm();
+          window.location.href = 'PotsPage.html';
+        }
+
+        function initialize() {
+          potContext = getPotContextFromQuery();
+          if (!potContext) {
+            window.location.href = 'PotsPage.html';
+            return;
+          }
+
+          currentPot = Object.assign({}, potContext.pot);
+          fillFormFromPot(currentPot);
+          if (deletePotBtn) {
+            deletePotBtn.hidden = potContext.kind !== 'custom';
+          }
+
+          var detailUrl = buildDetailUrl();
+          if (backLink) {
+            backLink.href = detailUrl;
+          }
+        }
+
+        inviteToggle.addEventListener('change', syncToggleState);
+        autosaveToggle.addEventListener('change', syncToggleState);
+        colorRadios.forEach(function (radio) {
+          radio.addEventListener('change', syncColorLabel);
+        });
+
+        saveButton.addEventListener('click', saveChanges);
+        cancelButton.addEventListener('click', cancelChanges);
+        if (deletePotBtn) {
+          deletePotBtn.addEventListener('click', function () {
+            openDeleteConfirm();
+          });
+        }
+        if (cancelDeletePotBtn) {
+          cancelDeletePotBtn.addEventListener('click', function () {
+            closeDeleteConfirm();
+          });
+        }
+        if (confirmDeletePotBtn) {
+          confirmDeletePotBtn.addEventListener('click', function () {
+            deleteCurrentPot();
+          });
+        }
+        if (deleteConfirm) {
+          deleteConfirm.addEventListener('click', function (event) {
+            if (event.target === deleteConfirm) {
+              closeDeleteConfirm();
+            }
+          });
+        }
+
+        initialize();
+      })();
+    </script>
+  </body>
+</html>

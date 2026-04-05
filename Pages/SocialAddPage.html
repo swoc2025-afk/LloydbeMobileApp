@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Add Friend</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen social-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="SocialPage.html">◀ Back</a>
+        <div class="page-title">Add Friend</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <label class="search social-search-input" for="friendSearchInput">
+          <span aria-hidden="true">🔍</span>
+          <input id="friendSearchInput" type="search" placeholder="Search nickname, email, phone" autocomplete="off" />
+        </label>
+
+        <div class="section-title" style="margin-top: 12px; margin-bottom: 10px;"><span>Suggested</span></div>
+        <div id="suggestedResults"></div>
+
+        <div class="section-title" style="margin-top: 12px; margin-bottom: 10px;"><span>Search results</span></div>
+        <div id="directoryResults"></div>
+        <div id="directoryNoResults" class="tx-no-results" hidden>No matching users found.</div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var FRIENDS_KEY = 'lloydbeFriends';
+        var REQUESTS_KEY = 'lloydbeFriendRequestsV1';
+        var REGISTRY_KEY = 'lloydbeTagRegistryV1';
+        var CURRENT_USER_KEY = 'lloydbeCurrentUserV1';
+        var NAME_KEY_PREFIX = 'lloydbeSignupNameV1::user::';
+        var EMAIL_KEY_PREFIX = 'lloydbeSignupEmailV1::user::';
+        var PHONE_KEY_PREFIX = 'lloydbeVerifiedPhoneV1::user::';
+        var TAG_KEY = 'lloydbeLloydsTagV1';
+
+        var searchInput = document.getElementById('friendSearchInput');
+        var suggestedEl = document.getElementById('suggestedResults');
+        var resultsEl = document.getElementById('directoryResults');
+        var noResultsEl = document.getElementById('directoryNoResults');
+
+        function loadFriends() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(FRIENDS_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveFriends(friends) {
+          localStorage.setItem(FRIENDS_KEY, JSON.stringify(friends));
+        }
+
+        function addFriend(friend) {
+          var friends = loadFriends();
+          var exists = friends.some(function (item) {
+            return String(item.handle || '').toLowerCase() === String(friend.handle || '').toLowerCase();
+          });
+          if (exists) {
+            return;
+          }
+          friends.unshift(friend);
+          saveFriends(friends);
+        }
+
+        function getCurrentUser() {
+          return String(localStorage.getItem(CURRENT_USER_KEY) || '').trim().toLowerCase();
+        }
+
+        function scopedKeyForUser(baseKey, owner) {
+          if (window.LloydbeUserScope && typeof window.LloydbeUserScope.toScopedKey === 'function') {
+            return window.LloydbeUserScope.toScopedKey(baseKey, owner);
+          }
+          return baseKey + '::user::' + String(owner || '').trim().toLowerCase();
+        }
+
+        function loadRegistry() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(REGISTRY_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+          } catch (error) {
+            return {};
+          }
+        }
+
+        function readName(ownerId) {
+          try {
+            var raw = localStorage.getItem(NAME_KEY_PREFIX + ownerId);
+            var parsed = raw ? JSON.parse(raw) : null;
+            if (!parsed || typeof parsed !== 'object') {
+              return '';
+            }
+            var first = String(parsed.firstName || '').trim();
+            var last = String(parsed.lastName || '').trim();
+            return (first + ' ' + last).trim();
+          } catch (error) {
+            return '';
+          }
+        }
+
+        function readEmail(ownerId) {
+          return String(localStorage.getItem(EMAIL_KEY_PREFIX + ownerId) || '').trim().toLowerCase();
+        }
+
+        function readPhone(ownerId) {
+          return String(localStorage.getItem(PHONE_KEY_PREFIX + ownerId) || '').trim();
+        }
+
+        function readTag(ownerId) {
+          var raw = String(localStorage.getItem(scopedKeyForUser(TAG_KEY, ownerId)) || '').trim().replace(/^@+/, '');
+          return raw ? '@' + raw : '';
+        }
+
+        function loadUserRequests(ownerId) {
+          try {
+            var raw = localStorage.getItem(scopedKeyForUser(REQUESTS_KEY, ownerId));
+            var parsed = JSON.parse(raw || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveUserRequests(ownerId, requests) {
+          localStorage.setItem(scopedKeyForUser(REQUESTS_KEY, ownerId), JSON.stringify(requests));
+        }
+
+        function sendFriendRequest(target) {
+          var fromOwner = getCurrentUser();
+          if (!fromOwner || !target || !target.owner || target.owner === fromOwner) {
+            return false;
+          }
+
+          var targetRequests = loadUserRequests(target.owner);
+          var exists = targetRequests.some(function (request) {
+            return request && request.status === 'pending' && String(request.fromOwner || '') === fromOwner;
+          });
+
+          if (exists) {
+            return false;
+          }
+
+          var fromName = readName(fromOwner) || 'Lloydbe user';
+          var fromHandle = readTag(fromOwner);
+          var fromEmail = readEmail(fromOwner);
+          var fromPhone = readPhone(fromOwner);
+
+          targetRequests.unshift({
+            id: 'friend_req_' + Date.now() + '_' + Math.floor(Math.random() * 100000),
+            status: 'pending',
+            createdAt: Date.now(),
+            fromOwner: fromOwner,
+            fromName: fromName,
+            fromHandle: fromHandle,
+            fromEmail: fromEmail,
+            fromPhone: fromPhone
+          });
+          saveUserRequests(target.owner, targetRequests);
+          return true;
+        }
+
+        function buildDirectory() {
+          var registry = loadRegistry();
+          var currentUser = getCurrentUser();
+          var existingHandles = {};
+
+          loadFriends().forEach(function (friend) {
+            var handle = String(friend.handle || '').trim().replace(/^@+/, '').toLowerCase();
+            if (handle) {
+              existingHandles[handle] = true;
+            }
+          });
+
+          return Object.keys(registry).map(function (tag) {
+            var owner = String(registry[tag] || '').trim().toLowerCase();
+            if (!owner || owner === currentUser || existingHandles[tag]) {
+              return null;
+            }
+
+            var name = readName(owner) || 'Lloydbe user';
+            var email = readEmail(owner);
+            var phone = readPhone(owner);
+
+            return {
+              owner: owner,
+              name: name,
+              handle: '@' + tag,
+              email: email,
+              phone: phone,
+              search: (tag + ' ' + name + ' ' + email + ' ' + phone).toLowerCase()
+            };
+          }).filter(Boolean);
+        }
+
+        function renderUserRows(container, items) {
+          container.innerHTML = '';
+          items.forEach(function (item) {
+            var row = document.createElement('div');
+            row.className = 'list-item';
+
+            var details = document.createElement('div');
+            details.className = 'details';
+
+            var nameEl = document.createElement('strong');
+            nameEl.textContent = item.name;
+
+            var subEl = document.createElement('small');
+            var parts = [item.handle];
+            if (item.email) {
+              parts.push(item.email);
+            }
+            if (item.phone) {
+              parts.push(item.phone);
+            }
+            subEl.textContent = ' ' + parts.join(' · ');
+
+            details.appendChild(nameEl);
+            details.appendChild(subEl);
+
+            var addBtn = document.createElement('button');
+            addBtn.className = 'btn request-send-btn';
+            addBtn.type = 'button';
+            addBtn.textContent = 'Add';
+            addBtn.addEventListener('click', function () {
+              var sent = sendFriendRequest(item);
+              addBtn.textContent = sent ? 'Requested' : 'Pending';
+              addBtn.disabled = true;
+            });
+
+            row.appendChild(details);
+            row.appendChild(addBtn);
+            container.appendChild(row);
+          });
+        }
+
+        function renderResults() {
+          var query = String(searchInput.value || '').trim().toLowerCase();
+          var directory = buildDirectory();
+
+          var suggested = directory.slice(0, 8);
+          renderUserRows(suggestedEl, suggested);
+          suggestedEl.hidden = query.length > 0;
+
+          resultsEl.innerHTML = '';
+          if (!query) {
+            noResultsEl.hidden = true;
+            return;
+          }
+
+          var matches = directory.filter(function (item) {
+            return item.search.indexOf(query.replace(/^@+/, '')) !== -1;
+          }).slice(0, 20);
+
+          renderUserRows(resultsEl, matches);
+          noResultsEl.hidden = matches.length > 0;
+        }
+
+        searchInput.addEventListener('input', renderResults);
+        renderResults();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create Challenge</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a id="challengeBackLink" class="back-link" href="ChallengesPage.html">◀ Back</a>
+        <div id="challengeEditorTitle" class="page-title">Create Challenge</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <form id="createChallengeForm" class="create-pot-form">
+          <label class="field-block" for="challengeTitle">
+            <span class="field-title">Challenge title</span>
+            <input id="challengeTitle" class="input" type="text" placeholder="No takeaway for 10 days" required />
+          </label>
+
+          <label class="field-block" for="challengeGoal">
+            <span class="field-title">Savings goal (£)</span>
+            <input id="challengeGoal" class="input" type="number" min="0" step="1" placeholder="50" required />
+          </label>
+
+          <label class="field-block" for="challengeDeadline">
+            <span class="field-title">Deadline</span>
+            <input id="challengeDeadline" class="input" type="date" />
+          </label>
+
+          <label class="field-block">
+            <span class="field-title">Card color</span>
+            <div class="color-picker" role="radiogroup" aria-label="Choose challenge color">
+              <input id="challenge-color-forest" type="radio" name="challengeColorChoice" value="#0a7b58" checked />
+              <label class="color-swatch" for="challenge-color-forest" style="--swatch: var(--green-forest);" aria-label="Forest"></label>
+
+              <input id="challenge-color-pine" type="radio" name="challengeColorChoice" value="#005a3c" />
+              <label class="color-swatch" for="challenge-color-pine" style="--swatch: var(--green-pine);" aria-label="Pine"></label>
+
+              <input id="challenge-color-sage" type="radio" name="challengeColorChoice" value="#b7e3b2" />
+              <label class="color-swatch" for="challenge-color-sage" style="--swatch: var(--green-sage);" aria-label="Sage"></label>
+
+              <input id="challenge-color-jade" type="radio" name="challengeColorChoice" value="#1fba7a" />
+              <label class="color-swatch" for="challenge-color-jade" style="--swatch: var(--green-jade);" aria-label="Jade"></label>
+
+              <input id="challenge-color-meadow" type="radio" name="challengeColorChoice" value="#1ec389" />
+              <label class="color-swatch" for="challenge-color-meadow" style="--swatch: var(--green-meadow);" aria-label="Meadow"></label>
+
+              <input id="challenge-color-evergreen" type="radio" name="challengeColorChoice" value="#0b6f4d" />
+              <label class="color-swatch" for="challenge-color-evergreen" style="--swatch: var(--green-evergreen);" aria-label="Evergreen"></label>
+            </div>
+          </label>
+
+          <div class="field-block">
+            <span class="field-title">Invite friends</span>
+            <div id="challengeInviteOptions" class="invite-options"></div>
+            <small class="field-note">Select friends to invite to this challenge.</small>
+          </div>
+
+          <button id="saveChallengeBtn" class="btn primary" type="submit" style="margin-top: 10px;">Create challenge</button>
+          <button id="deleteChallengeBtn" class="btn challenge-delete-btn" type="button" hidden style="margin-top: 8px; width: 100%;">Delete challenge</button>
+        </form>
+      </section>
+    </div>
+
+    <div id="deleteConfirmModal" class="confirm-overlay" hidden>
+      <div class="confirm-card">
+        <h3>Delete this challenge?</h3>
+        <p>Are you sure you want to delete this? It will be gone forever.</p>
+        <div class="confirm-actions">
+          <button id="cancelDeleteBtn" class="btn" type="button">Cancel</button>
+          <button id="confirmDeleteBtn" class="btn challenge-delete-btn" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="unsavedConfirmModal" class="confirm-overlay" hidden>
+      <div class="confirm-card">
+        <h3>Discard your changes?</h3>
+        <p>You made changes to this challenge. Do you want to leave without saving?</p>
+        <div class="confirm-actions">
+          <button id="stayOnPageBtn" class="btn" type="button">Cancel</button>
+          <button id="discardChangesBtn" class="btn challenge-delete-btn" type="button">Leave</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbeChallenges';
+        var DAILY_KEY = 'lloydbeDailyChallenge';
+        var FRIENDS_KEY = 'lloydbeFriends';
+
+        var form = document.getElementById('createChallengeForm');
+        var saveButton = document.getElementById('saveChallengeBtn');
+        var deleteButton = document.getElementById('deleteChallengeBtn');
+        var inviteOptions = document.getElementById('challengeInviteOptions');
+        var colorRadios = Array.from(document.querySelectorAll('input[name="challengeColorChoice"]'));
+        var titleEl = document.getElementById('challengeEditorTitle');
+        var backLink = document.getElementById('challengeBackLink');
+
+        var confirmModal = document.getElementById('deleteConfirmModal');
+        var cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        var confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        var unsavedConfirmModal = document.getElementById('unsavedConfirmModal');
+        var stayOnPageBtn = document.getElementById('stayOnPageBtn');
+        var discardChangesBtn = document.getElementById('discardChangesBtn');
+
+        var initialSnapshot = '';
+        var pendingBackHref = 'ChallengesPage.html';
+
+        var params = new URLSearchParams(window.location.search);
+        var editId = params.get('edit');
+        var mode = params.get('mode');
+
+        if (mode === 'daily') {
+          window.location.href = 'ChallengesPage.html';
+          return;
+        }
+
+        function loadChallenges() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function saveChallenges(challenges) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(challenges));
+        }
+
+        function loadDaily() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+          } catch (error) {
+            return {};
+          }
+        }
+
+        function saveDaily(daily) {
+          localStorage.setItem(DAILY_KEY, JSON.stringify(daily));
+        }
+
+        function loadFriendNames() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(FRIENDS_KEY) || '[]');
+            return Array.isArray(parsed)
+              ? parsed.map(function (friend) { return String(friend.name || '').trim(); }).filter(Boolean)
+              : [];
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function renderInviteOptions(selected) {
+          inviteOptions.innerHTML = '';
+          var selectedSet = {};
+          (Array.isArray(selected) ? selected : []).forEach(function (name) {
+            selectedSet[String(name)] = true;
+          });
+
+          loadFriendNames().forEach(function (name) {
+            var label = document.createElement('label');
+            label.className = 'friend-pill';
+
+            var input = document.createElement('input');
+            input.type = 'checkbox';
+            input.value = name;
+            input.checked = !!selectedSet[name];
+
+            var span = document.createElement('span');
+            span.textContent = name;
+
+            label.appendChild(input);
+            label.appendChild(span);
+            inviteOptions.appendChild(label);
+          });
+        }
+
+        function selectedInvites() {
+          return Array.from(inviteOptions.querySelectorAll('input:checked')).map(function (input) {
+            return input.value;
+          });
+        }
+
+        function getSelectedColor() {
+          var selected = colorRadios.find(function (radio) {
+            return radio.checked;
+          });
+          return selected ? selected.value : '#0a7b58';
+        }
+
+        function setSelectedColor(value) {
+          var normalized = value || '#0a7b58';
+          var hasMatch = colorRadios.some(function (radio) {
+            return radio.value === normalized;
+          });
+
+          colorRadios.forEach(function (radio, index) {
+            radio.checked = radio.value === normalized || (!hasMatch && index === 0);
+          });
+        }
+
+        function setFormValues(data) {
+          document.getElementById('challengeTitle').value = data.title || '';
+          document.getElementById('challengeGoal').value = Number.isFinite(Number(data.goal)) ? Number(data.goal) : 0;
+          document.getElementById('challengeDeadline').value = data.deadline || '';
+          setSelectedColor(data.color || '#0a7b58');
+          renderInviteOptions(data.invitedFriends || []);
+        }
+
+        function openConfirmModal() {
+          confirmModal.hidden = false;
+        }
+
+        function closeConfirmModal() {
+          confirmModal.hidden = true;
+        }
+
+        function openUnsavedConfirm() {
+          if (unsavedConfirmModal) {
+            unsavedConfirmModal.hidden = false;
+          }
+        }
+
+        function closeUnsavedConfirm() {
+          if (unsavedConfirmModal) {
+            unsavedConfirmModal.hidden = true;
+          }
+        }
+
+        function formSnapshot() {
+          var title = (document.getElementById('challengeTitle').value || '').trim();
+          var goal = Number(document.getElementById('challengeGoal').value || 0);
+          var deadline = document.getElementById('challengeDeadline').value || '';
+          var color = getSelectedColor();
+          var invites = selectedInvites().slice().sort();
+
+          return JSON.stringify({
+            title: title,
+            goal: Number.isFinite(goal) ? goal : 0,
+            deadline: deadline,
+            color: color,
+            invitedFriends: invites
+          });
+        }
+
+        function setInitialSnapshot() {
+          initialSnapshot = formSnapshot();
+        }
+
+        function hasUnsavedChanges() {
+          return formSnapshot() !== initialSnapshot;
+        }
+
+        function deleteEditedChallenge() {
+          if (!editId) {
+            return;
+          }
+          var challenges = loadChallenges();
+          var filtered = challenges.filter(function (challenge) {
+            return String(challenge.id) !== String(editId);
+          });
+          saveChallenges(filtered);
+          window.location.href = 'ChallengesPage.html';
+        }
+
+        function initMode() {
+          if (editId) {
+            var challenges = loadChallenges();
+            var found = challenges.find(function (challenge) {
+              return String(challenge.id) === String(editId);
+            });
+            if (found) {
+              titleEl.textContent = 'Edit Challenge';
+              saveButton.textContent = 'Save changes';
+              deleteButton.hidden = false;
+              setFormValues(found);
+              setInitialSnapshot();
+              return;
+            }
+          }
+
+          renderInviteOptions([]);
+          setInitialSnapshot();
+        }
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var title = (document.getElementById('challengeTitle').value || '').trim();
+          var goal = Number(document.getElementById('challengeGoal').value || 0);
+          var deadline = document.getElementById('challengeDeadline').value || '';
+          var color = getSelectedColor();
+          var invitedFriends = selectedInvites();
+
+          if (!title || !Number.isFinite(goal) || goal < 0) {
+            return;
+          }
+          if (editId) {
+            var challengesToEdit = loadChallenges();
+            var idx = challengesToEdit.findIndex(function (challenge) {
+              return String(challenge.id) === String(editId);
+            });
+
+            if (idx !== -1) {
+              challengesToEdit[idx] = Object.assign({}, challengesToEdit[idx], {
+                title: title,
+                goal: goal,
+                deadline: deadline,
+                color: color,
+                invitedFriends: invitedFriends
+              });
+              saveChallenges(challengesToEdit);
+            }
+          } else {
+            var challenges = loadChallenges();
+            challenges.unshift({
+              id: 'challenge_' + Date.now(),
+              title: title,
+              goal: goal,
+              deadline: deadline,
+              color: color,
+              points: 15,
+              invitedFriends: invitedFriends
+            });
+            saveChallenges(challenges);
+          }
+
+          saveButton.textContent = 'Saved';
+          window.setTimeout(function () {
+            window.location.href = 'ChallengesPage.html';
+          }, 300);
+        });
+
+        deleteButton.addEventListener('click', openConfirmModal);
+        cancelDeleteBtn.addEventListener('click', closeConfirmModal);
+        confirmDeleteBtn.addEventListener('click', deleteEditedChallenge);
+
+        confirmModal.addEventListener('click', function (event) {
+          if (event.target === confirmModal) {
+            closeConfirmModal();
+          }
+        });
+
+        if (backLink) {
+          backLink.addEventListener('click', function (event) {
+            if (!hasUnsavedChanges()) {
+              return;
+            }
+            event.preventDefault();
+            pendingBackHref = backLink.getAttribute('href') || 'ChallengesPage.html';
+            openUnsavedConfirm();
+          });
+        }
+
+        if (stayOnPageBtn) {
+          stayOnPageBtn.addEventListener('click', function () {
+            closeUnsavedConfirm();
+          });
+        }
+
+        if (discardChangesBtn) {
+          discardChangesBtn.addEventListener('click', function () {
+            window.location.href = pendingBackHref;
+          });
+        }
+
+        if (unsavedConfirmModal) {
+          unsavedConfirmModal.addEventListener('click', function (event) {
+            if (event.target === unsavedConfirmModal) {
+              closeUnsavedConfirm();
+            }
+          });
+        }
+
+        initMode();
+      })();
+    </script>
+  </body>
+</html>

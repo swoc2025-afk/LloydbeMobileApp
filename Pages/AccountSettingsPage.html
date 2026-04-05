@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Account Settings</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen settings-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="HomePage.html">◀ Back</a>
+        <div class="page-title">Account Settings</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <div class="settings-group-title">Profile</div>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=personal_details">
+          <div class="details">
+            <strong>Personal details</strong>
+            <small>Name, email, phone</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=address">
+          <div class="details">
+            <strong>Address</strong>
+            <small>Home and billing address</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+
+        <div class="settings-group-title">Banking</div>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=cards">
+          <div class="details">
+            <strong>Cards</strong>
+            <small>Freeze card, PIN, limits</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=bank_accounts">
+          <div class="details">
+            <strong>Bank accounts</strong>
+            <small>Linked accounts and payouts</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=spending_limits">
+          <div class="details">
+            <strong>Spending limits</strong>
+            <small>Daily and monthly caps</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+
+        <div class="settings-group-title">Security</div>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=biometrics">
+          <div class="details">
+            <strong>Face ID / Touch ID</strong>
+            <small>Use biometrics to sign in</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=tx_notifications">
+          <div class="details">
+            <strong>Transaction notifications</strong>
+            <small>Instant spend alerts</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=change_password">
+          <div class="details">
+            <strong>Change password</strong>
+            <small>Update your login password</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+
+        <div class="settings-group-title">Support</div>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=help_center">
+          <div class="details">
+            <strong>Help center</strong>
+            <small>FAQs and contact options</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+        <a class="list-item settings-item settings-link" href="AccountSettingDetailPage.html?setting=legal_privacy">
+          <div class="details">
+            <strong>Legal and privacy</strong>
+            <small>Terms, privacy, data settings</small>
+          </div>
+          <span class="settings-chevron">›</span>
+        </a>
+
+        <button id="switchAccountBtn" class="btn" type="button" style="width: 100%; margin-top: 10px; background: #eef0f4; color: #2f3742; font-weight: 700;">Switch account</button>
+        <button id="logoutBtn" class="btn" type="button" style="width: 100%; margin-top: 10px; background: #ffe0e0; color: #8d3535; font-weight: 700;">Log out</button>
+      </section>
+    </div>
+
+    <div id="switchAccountConfirmModal" class="confirm-overlay" hidden>
+      <div class="confirm-card">
+        <h3>Switch account?</h3>
+        <p>You will be returned to the login/create screen.</p>
+        <div class="confirm-actions">
+          <button id="cancelSwitchAccountBtn" class="btn" type="button">Cancel</button>
+          <button id="confirmSwitchAccountBtn" class="btn primary" type="button">Switch</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="logoutConfirmModal" class="confirm-overlay" hidden>
+      <div class="confirm-card">
+        <h3>Log out of Lloydbe?</h3>
+        <p>Are you sure you want to log out?</p>
+        <div class="confirm-actions">
+          <button id="cancelLogoutBtn" class="btn" type="button">Cancel</button>
+          <button id="confirmLogoutBtn" class="btn challenge-delete-btn" type="button">Log out</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+      <a class="nav-item active" href="HomePage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <path d="M3 10.5l9-7 9 7" />
+          <path d="M5 9.5V20h14V9.5" />
+        </svg>
+        <span>HOME</span>
+      </a>
+      <a class="nav-item" href="TrendsPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4v8h8" />
+          <path d="M12 12l5.5 5.5" />
+        </svg>
+        <span>BUDGET</span>
+      </a>
+      <a class="nav-item social-tab" href="SocialPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="8" r="2.8" />
+          <circle cx="15.8" cy="8.4" r="2.4" />
+          <path d="M3.8 18.7c0-2.6 2.1-4.7 4.7-4.7h5.2c2.6 0 4.7 2.1 4.7 4.7 0 .8-.6 1.5-1.4 1.5H5.2c-.8 0-1.4-.7-1.4-1.5z" />
+        </svg>
+        <span>SOCIAL</span>
+      </a>
+      <a class="nav-item challenges-tab" href="ChallengesPage.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 5h8v3.6a4 4 0 0 1-8 0V5z" />
+          <path d="M8 7H6.5a2.5 2.5 0 0 0 0 5H8" />
+          <path d="M16 7h1.5a2.5 2.5 0 0 1 0 5H16" />
+          <path d="M12 12.6V16" />
+          <path d="M9.4 19h5.2" />
+        </svg>
+        <span>CHALLENGES</span>
+      </a>
+    </nav>
+
+    <script>
+      (function () {
+        var CURRENT_USER_KEY = 'lloydbeCurrentUserV1';
+        var CRED_KEY = 'lloydbeAuthCredentialV1';
+        var ATTEMPT_KEY = 'lloydbeAuthAttemptsV1';
+        var LAST_USER_KEY = 'lloydbeLastSignupUsernameV1';
+
+        var switchAccountBtn = document.getElementById('switchAccountBtn');
+        var switchAccountConfirmModal = document.getElementById('switchAccountConfirmModal');
+        var cancelSwitchAccountBtn = document.getElementById('cancelSwitchAccountBtn');
+        var confirmSwitchAccountBtn = document.getElementById('confirmSwitchAccountBtn');
+        var logoutBtn = document.getElementById('logoutBtn');
+        var logoutConfirmModal = document.getElementById('logoutConfirmModal');
+        var cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+        var confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+
+        if (
+          !switchAccountBtn ||
+          !switchAccountConfirmModal ||
+          !cancelSwitchAccountBtn ||
+          !confirmSwitchAccountBtn ||
+          !logoutBtn ||
+          !logoutConfirmModal ||
+          !cancelLogoutBtn ||
+          !confirmLogoutBtn
+        ) {
+          return;
+        }
+
+        function clearSessionAndGoToAuth() {
+          localStorage.removeItem(CURRENT_USER_KEY);
+          localStorage.removeItem(CRED_KEY);
+          localStorage.removeItem(ATTEMPT_KEY);
+          localStorage.removeItem(LAST_USER_KEY);
+          window.location.href = 'LoadingPage.html';
+        }
+
+        function openSwitchAccountConfirm() {
+          switchAccountConfirmModal.hidden = false;
+        }
+
+        function closeSwitchAccountConfirm() {
+          switchAccountConfirmModal.hidden = true;
+        }
+
+        function openLogoutConfirm() {
+          logoutConfirmModal.hidden = false;
+        }
+
+        function closeLogoutConfirm() {
+          logoutConfirmModal.hidden = true;
+        }
+
+        switchAccountBtn.addEventListener('click', openSwitchAccountConfirm);
+        cancelSwitchAccountBtn.addEventListener('click', closeSwitchAccountConfirm);
+        confirmSwitchAccountBtn.addEventListener('click', clearSessionAndGoToAuth);
+
+        logoutBtn.addEventListener('click', openLogoutConfirm);
+        cancelLogoutBtn.addEventListener('click', closeLogoutConfirm);
+
+        confirmLogoutBtn.addEventListener('click', clearSessionAndGoToAuth);
+
+        switchAccountConfirmModal.addEventListener('click', function (event) {
+          if (event.target === switchAccountConfirmModal) {
+            closeSwitchAccountConfirm();
+          }
+        });
+        logoutConfirmModal.addEventListener('click', function (event) {
+          if (event.target === logoutConfirmModal) {
+            closeLogoutConfirm();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

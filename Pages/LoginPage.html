@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Log In Screen</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen auth-screen login-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="LoadingPage.html">◀ Back</a>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <main class="auth-main auth-main-login">
+        <div class="logo-wrap logo-wrap-login" aria-label="Lloydbe logo">
+          <img class="logo-image" src="../logo.png" alt="Lloydbe" />
+        </div>
+
+        <form id="loginForm" class="login-form" novalidate>
+          <input id="loginUsername" class="auth-input" type="text" name="username" placeholder="Username" autocomplete="username" />
+          <div class="password-field">
+            <input id="loginPassword" class="auth-input" type="password" name="password" placeholder="Password" autocomplete="current-password" />
+            <button type="button" class="password-toggle" data-target="loginPassword" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <div id="loginStatus" class="login-status" role="status" aria-live="polite"></div>
+          <button id="loginSubmitBtn" class="auth-btn" type="submit">Login</button>
+        </form>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var CRED_KEY = 'lloydbeAuthCredentialV1';
+        var ATTEMPT_KEY = 'lloydbeAuthAttemptsV1';
+        var MAX_ATTEMPTS = 5;
+        var LOCK_MS = 60 * 1000;
+        var CURRENT_USER_KEY = 'lloydbeCurrentUserV1';
+        var SMS_API_KEY = 'lloydbeSmsApiUrl';
+        var API_BASE_KEY = 'lloydbeApiBaseUrl';
+        var DEFAULT_API_BASE = 'http://localhost:3001';
+
+        var form = document.getElementById('loginForm');
+        var usernameInput = document.getElementById('loginUsername');
+        var passwordInput = document.getElementById('loginPassword');
+        var statusEl = document.getElementById('loginStatus');
+        var submitBtn = document.getElementById('loginSubmitBtn');
+
+        function setupPasswordToggles() {
+          var buttons = document.querySelectorAll('.password-toggle[data-target]');
+          buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+              var targetId = button.getAttribute('data-target');
+              var input = document.getElementById(targetId);
+              if (!input) {
+                return;
+              }
+              var show = input.type === 'password';
+              input.type = show ? 'text' : 'password';
+              button.textContent = show ? 'Hide' : 'Show';
+              button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+              button.setAttribute('aria-pressed', show ? 'true' : 'false');
+            });
+          });
+        }
+
+        function readJSON(key, fallback) {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(key) || '');
+            return parsed && typeof parsed === 'object' ? parsed : fallback;
+          } catch (error) {
+            return fallback;
+          }
+        }
+
+        function writeJSON(key, value) {
+          localStorage.setItem(key, JSON.stringify(value));
+        }
+
+        async function sha256Hex(value) {
+          var bytes = new TextEncoder().encode(String(value || ''));
+          var hash = await crypto.subtle.digest('SHA-256', bytes);
+          return Array.from(new Uint8Array(hash)).map(function (b) {
+            return b.toString(16).padStart(2, '0');
+          }).join('');
+        }
+
+        function getLocalCredential() {
+          var existing = readJSON(CRED_KEY, null);
+          if (!existing || !existing.username || !existing.passHash || !existing.salt) {
+            return null;
+          }
+          return existing;
+        }
+
+        function deriveBaseUrlFromSmsApi(url) {
+          var clean = String(url || '').trim();
+          if (!clean) {
+            return '';
+          }
+          var marker = '/api/send-login-code';
+          var idx = clean.indexOf(marker);
+          if (idx > -1) {
+            return clean.slice(0, idx);
+          }
+          return clean;
+        }
+
+        function addUniqueBase(list, value) {
+          var clean = String(value || '').trim().replace(/\/+$/, '');
+          if (!clean || list.indexOf(clean) !== -1) {
+            return;
+          }
+          list.push(clean);
+        }
+
+        function getApiBases() {
+          var bases = [];
+          var saved = String(localStorage.getItem(API_BASE_KEY) || '').trim();
+          var fromSms = deriveBaseUrlFromSmsApi(localStorage.getItem(SMS_API_KEY));
+
+          addUniqueBase(bases, saved);
+          addUniqueBase(bases, fromSms);
+
+          if (window && window.location && window.location.hostname) {
+            var host = String(window.location.hostname || '').trim();
+            var protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            if (host && host !== 'localhost' && host !== '127.0.0.1') {
+              addUniqueBase(bases, protocol + '//' + host + ':3001');
+            }
+          }
+
+          addUniqueBase(bases, DEFAULT_API_BASE);
+          addUniqueBase(bases, 'http://127.0.0.1:3001');
+          addUniqueBase(bases, 'http://10.0.2.2:3001');
+
+          return bases;
+        }
+
+        function fetchWithTimeout(url, options, timeoutMs) {
+          return new Promise(function (resolve, reject) {
+            var timer = window.setTimeout(function () {
+              reject(new Error('Request timeout'));
+            }, timeoutMs);
+
+            fetch(url, options).then(function (response) {
+              window.clearTimeout(timer);
+              resolve(response);
+            }).catch(function (error) {
+              window.clearTimeout(timer);
+              reject(error);
+            });
+          });
+        }
+
+        async function requestAccountApi(path, options) {
+          var bases = getApiBases();
+          var timeoutMs = 1200;
+
+          var attempts = bases.map(function (base) {
+            return fetchWithTimeout(base + path, options, timeoutMs);
+          });
+
+          if (!Promise.any) {
+            var lastError = null;
+            for (var i = 0; i < attempts.length; i += 1) {
+              try {
+                return await attempts[i];
+              } catch (error) {
+                lastError = error;
+              }
+            }
+            throw lastError || new Error('API connection failed');
+          }
+
+          try {
+            return await Promise.any(attempts);
+          } catch (error) {
+            throw new Error('API connection failed');
+          }
+        }
+
+        function getAttempts() {
+          return readJSON(ATTEMPT_KEY, { count: 0, lockUntil: 0 });
+        }
+
+        function setAttempts(state) {
+          writeJSON(ATTEMPT_KEY, state);
+        }
+
+        function lockSecondsRemaining(lockUntil) {
+          var ms = Math.max(0, Number(lockUntil || 0) - Date.now());
+          return Math.ceil(ms / 1000);
+        }
+
+        function setStatus(message, isError) {
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('error', !!isError);
+        }
+
+        function updateLockUI() {
+          var attempts = getAttempts();
+          var locked = Number(attempts.lockUntil || 0) > Date.now();
+          submitBtn.disabled = locked;
+
+          if (locked) {
+            setStatus('Too many attempts. Try again in ' + lockSecondsRemaining(attempts.lockUntil) + 's.', true);
+          }
+
+          return locked;
+        }
+
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault();
+
+          if (updateLockUI()) {
+            return;
+          }
+
+          var username = (usernameInput.value || '').trim();
+          var password = passwordInput.value || '';
+
+          if (!username || !password) {
+            setStatus('Enter both username and password.', true);
+            return;
+          }
+
+          submitBtn.disabled = true;
+
+          try {
+            var response = await requestAccountApi('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                username: username,
+                password: password
+              })
+            });
+
+            var payload = null;
+            try {
+              payload = await response.json();
+            } catch (parseError) {
+              payload = null;
+            }
+
+            if (response.ok && payload && payload.ok === true) {
+              var resolvedUsername = String(payload.username || username);
+              setAttempts({ count: 0, lockUntil: 0 });
+              setStatus('Login successful. Redirecting...', false);
+              window.setTimeout(function () {
+                localStorage.setItem(CURRENT_USER_KEY, resolvedUsername);
+                localStorage.setItem(CRED_KEY, JSON.stringify({ username: resolvedUsername }));
+                window.location.href = 'HomePage.html';
+              }, 220);
+              return;
+            }
+
+            var attempts = getAttempts();
+            var nextCount = Number(attempts.count || 0) + 1;
+            if (nextCount >= MAX_ATTEMPTS) {
+              setAttempts({ count: 0, lockUntil: Date.now() + LOCK_MS });
+              setStatus('Too many attempts. Try again in ' + Math.ceil(LOCK_MS / 1000) + 's.', true);
+            } else {
+              setAttempts({ count: nextCount, lockUntil: 0 });
+              setStatus((payload && payload.error) || 'Incorrect username or password.', true);
+            }
+          } catch (error) {
+            var localCredential = getLocalCredential();
+            if (localCredential) {
+              try {
+                var localHash = await sha256Hex(password + ':' + localCredential.salt);
+                var localUserMatch = username.toLowerCase() === String(localCredential.username || '').toLowerCase();
+                var localPassMatch = localHash === localCredential.passHash;
+                if (localUserMatch && localPassMatch) {
+                  setAttempts({ count: 0, lockUntil: 0 });
+                  setStatus('Login successful (offline mode). Redirecting...', false);
+                  window.setTimeout(function () {
+                    localStorage.setItem(CURRENT_USER_KEY, localCredential.username);
+                    localStorage.setItem(CRED_KEY, JSON.stringify({
+                      username: localCredential.username,
+                      passHash: localCredential.passHash,
+                      salt: localCredential.salt
+                    }));
+                    window.location.href = 'HomePage.html';
+                  }, 220);
+                  return;
+                }
+              } catch (localError) {
+                // Fall through to standard error.
+              }
+            }
+            setStatus('Unable to connect to account service. Start backend on port 3001 or set lloydbeApiBaseUrl.', true);
+          } finally {
+            updateLockUI();
+          }
+        });
+
+        setupPasswordToggles();
+        updateLockUI();
+      })();
+    </script>
+  </body>
+</html>

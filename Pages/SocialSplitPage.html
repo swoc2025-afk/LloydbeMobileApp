@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Split Bill</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="../user-scope.js"></script>
+  </head>
+  <body>
+    <div class="screen social-screen">
+      <div class="status-bar">
+        <strong>9:41</strong>
+        <div class="status-icons">
+          <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="network-label">5G</span>
+          <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <a class="back-link" href="SocialPage.html">◀ Back</a>
+        <div class="page-title">Split Bill</div>
+        <div style="width: 38px;"></div>
+      </div>
+
+      <section class="section" style="padding-bottom: calc(var(--nav-height) + 12px);">
+        <form id="splitForm" class="create-pot-form">
+          <label class="field-block" for="splitAmount">
+            <span class="field-title">Total amount (£)</span>
+            <input id="splitAmount" class="input" type="number" min="0" step="0.01" placeholder="0.00" />
+          </label>
+
+          <label class="field-block" for="totalPeople">
+            <span class="field-title">Total people</span>
+            <input id="totalPeople" class="input" type="number" min="1" step="1" placeholder="4" />
+            <small class="field-note">Use this for everyone splitting the bill, including people not on Lloydbe.</small>
+          </label>
+
+          <button class="btn primary" type="submit" style="margin-top: 12px;">Calculate split</button>
+        </form>
+
+        <div id="splitResult" class="request-link-card" style="margin-top: 12px;" hidden>
+          <div>
+            <strong>Each person pays</strong>
+            <div id="splitPerPerson" class="request-link-sub" style="font-size: 15px; color: #3b322e;">£0.00</div>
+            <div id="splitSummary" class="request-link-sub" style="margin-top: 4px;">-</div>
+          </div>
+        </div>
+
+        <div class="field-title" style="margin: 14px 0 8px;">Send request to friends</div>
+        <div id="splitPeople" class="invite-options"></div>
+
+        <button id="sendSplitRequestsBtn" class="btn" type="button" style="width: 100%; margin-top: 12px; background: #d1cdc7; color: #4f4943; font-weight: 700;" disabled>
+          Send request to selected friends
+        </button>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'lloydbeFriends';
+        var peopleWrap = document.getElementById('splitPeople');
+        var splitForm = document.getElementById('splitForm');
+        var splitResult = document.getElementById('splitResult');
+        var splitPerPerson = document.getElementById('splitPerPerson');
+        var splitSummary = document.getElementById('splitSummary');
+        var sendBtn = document.getElementById('sendSplitRequestsBtn');
+        var amountInput = document.getElementById('splitAmount');
+        var totalPeopleInput = document.getElementById('totalPeople');
+
+        var hasValidCalculation = false;
+
+        function loadSavedNames() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (!Array.isArray(parsed)) {
+              return [];
+            }
+            return parsed.map(function (f) { return f.name; }).filter(Boolean);
+          } catch (error) {
+            return [];
+          }
+        }
+
+        function uniqueNames() {
+          var names = loadSavedNames();
+          var seen = {};
+          return names.filter(function (name) {
+            var key = String(name).toLowerCase();
+            if (seen[key]) {
+              return false;
+            }
+            seen[key] = true;
+            return true;
+          });
+        }
+
+        function selectedFriendNames() {
+          return Array.from(peopleWrap.querySelectorAll('input:checked')).map(function (input) {
+            return input.value;
+          });
+        }
+
+        function updateSendButtonState() {
+          var selected = selectedFriendNames().length;
+          var hasSelectedFriend = selected > 0;
+
+          sendBtn.disabled = !(hasValidCalculation && hasSelectedFriend);
+          sendBtn.style.background = hasSelectedFriend ? 'var(--accent)' : '#d1cdc7';
+          sendBtn.style.color = hasSelectedFriend ? '#ffffff' : '#4f4943';
+        }
+
+        function renderPeople() {
+          uniqueNames().forEach(function (name) {
+            var label = document.createElement('label');
+            label.className = 'friend-pill';
+
+            var input = document.createElement('input');
+            input.type = 'checkbox';
+            input.value = name;
+            input.addEventListener('change', updateSendButtonState);
+
+            var span = document.createElement('span');
+            span.textContent = name;
+
+            label.appendChild(input);
+            label.appendChild(span);
+            peopleWrap.appendChild(label);
+          });
+        }
+
+        splitForm.addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var amount = Number(amountInput.value || 0);
+          var totalPeople = Number(totalPeopleInput.value || 0);
+          var selected = selectedFriendNames().length;
+
+          if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(totalPeople) || totalPeople < 1) {
+            splitResult.hidden = false;
+            splitPerPerson.textContent = 'Enter a valid amount and total people';
+            splitSummary.textContent = ' ';
+            hasValidCalculation = false;
+            updateSendButtonState();
+            return;
+          }
+
+          hasValidCalculation = true;
+
+          splitResult.hidden = false;
+          splitPerPerson.textContent = '£' + (amount / totalPeople).toFixed(2) + ' each';
+          splitSummary.textContent = 'Splitting £' + amount.toFixed(2) + ' between ' + totalPeople + ' people. ' + selected + ' friend' + (selected === 1 ? '' : 's') + ' selected for Lloydbe requests.';
+          updateSendButtonState();
+        });
+
+        sendBtn.addEventListener('click', function () {
+          var selected = selectedFriendNames();
+          if (!selected.length || !hasValidCalculation) {
+            return;
+          }
+
+          sendBtn.textContent = 'Requests sent to ' + selected.length + ' friend' + (selected.length === 1 ? '' : 's');
+          sendBtn.disabled = true;
+        });
+
+        renderPeople();
+      })();
+    </script>
+  </body>
+</html>
